@@ -1,7 +1,8 @@
-torch==2.2.0
-torchvision==0.17.0
-torchmetrics
-numpy==1.26.4
+torch==1.13.1
+torchvision==0.14.1
+torchmetrics==0.11.4
+numpy==1.24.4
+dlib==19.24.2
 tqdm
 matplotlib
 pandas
