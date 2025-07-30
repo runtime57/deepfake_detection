@@ -1,0 +1,3 @@
+[submodule "src/model/av_hubert"]
+	path = src/model/av_hubert
+	url = https://github.com/facebookresearch/av_hubert.git
