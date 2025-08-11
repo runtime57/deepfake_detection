@@ -31,4 +31,7 @@ class AccuracyMetric(BaseMetric):
         device = "cuda" if torch.cuda.is_available() else "cpu"
         dclasses = logits.argmax(dim=-1).to(device)
         dlabels = labels.to(device)
-        return (dclasses == dlabels).mean(dtype=torch.float32)
+        print(dclasses, '\n', dlabels)
+        result = (dclasses == dlabels).mean(dtype=torch.float32)
+        print("OKAY")
+        return result

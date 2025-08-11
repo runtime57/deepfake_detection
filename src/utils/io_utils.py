@@ -4,7 +4,6 @@ from pathlib import Path
 
 ROOT_PATH = Path(__file__).absolute().resolve().parent.parent.parent
 
-
 def read_json(fname):
     """
     Read the given json file.

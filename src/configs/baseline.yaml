@@ -1,9 +1,9 @@
 defaults:
   - model: baseline
   - writer: wandb
-  - metrics: example
-  - datasets: example
-  - dataloader: example
+  - metrics: pages
+  - datasets: onebatchtest
+  - dataloader: onebatchtest
   - transforms: example
   - _self_
 optimizer:
@@ -14,12 +14,12 @@ lr_scheduler:
   gamma: 0.9
   step_size: ${trainer.epoch_len}
 loss_function:
-  _target_: src.loss.ExampleLoss
+  _target_: src.loss.CrossEntropyLoss
 trainer:
-  log_step: 50
-  n_epochs: 100
+  log_step: 5
+  n_epochs: 30
   epoch_len: 500
-  device_tensors: ["data_object", "labels"] # which tensors should be on device (ex. GPU)
+  device_tensors: ["vivit_frames", "labels"] # which tensors should be on device (ex. GPU)
   resume_from: null # null or path to the checkpoint dir with *.pth and config.yaml
   device: auto # device name or "auto"
   override: False # if True, will override the previous run with the same name

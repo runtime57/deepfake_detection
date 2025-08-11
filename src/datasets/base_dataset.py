@@ -3,6 +3,7 @@ import random
 from typing import List
 
 import torch
+import safetensors
 from torch.utils.data import Dataset
 
 logger = logging.getLogger(__name__)
@@ -58,9 +59,10 @@ class BaseDataset(Dataset):
         data_dict = self._index[ind]
         data_path = data_dict["path"]
         data_object = self.load_object(data_path)
+        print(data_object)
         data_label = data_dict["label"]
 
-        instance_data = {"data_object": data_object, "labels": data_label}
+        instance_data = {"av_frames": data_object["av_frames"], "av_audio": data_object["av_audio"], "vivit_frames": data_object["vivit_frames"], "labels": data_label}
         instance_data = self.preprocess_data(instance_data)
 
         return instance_data
@@ -80,7 +82,7 @@ class BaseDataset(Dataset):
         Returns:
             data_object (Tensor):
         """
-        data_object = torch.load(path)
+        data_object = safetensors.torch.load_file(path)
         return data_object
 
     def preprocess_data(self, instance_data):

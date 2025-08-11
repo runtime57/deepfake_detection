@@ -2,3 +2,6 @@ defaults:
   - batch_transforms: example
   - instance_transforms: example
   - _self_
+instance_transforms:
+  train: null
+  inference: null

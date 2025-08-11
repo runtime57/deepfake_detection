@@ -1,16 +1,13 @@
 import torch
+import numpy as np
 from torch import nn
+from sklearn.utils.class_weight import compute_class_weight
 
 
-class CrossEntropyLoss(nn.Module):
+class WeightedCrossEntropyLoss(nn.Module):
     """
-    Example of a loss function to use.
+    Weighted CrossEntropyLoss
     """
-
-    def __init__(self):
-        super().__init__()
-        self.loss = nn.CrossEntropyLoss()
-
     def forward(self, logits: torch.Tensor, labels: torch.Tensor, **batch):
         """
         Loss function calculation logic.
@@ -29,6 +26,6 @@ class CrossEntropyLoss(nn.Module):
         Returns:
             losses (dict): dict containing calculated loss functions.
         """
-        print(labels)
-        print(logits)
-        return {"loss": self.loss(logits, labels)}
+        weights = compute_class_weight(class_weight="balanced", classes=np.unique(labels.numpy()), y=labels.numpy())
+        weighted_loss = nn.CrossEntropyLoss(weight=weights)
+        return {"loss": weighted_loss(logits, labels)}

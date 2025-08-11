@@ -1,5 +1,10 @@
 from torch import nn
+import torch
 from torch.nn import Sequential
+import torchvision
+import fairseq
+from argparse import Namespace
+from transformers import VivitModel
 
 
 class BaselineModel(nn.Module):
@@ -7,7 +12,7 @@ class BaselineModel(nn.Module):
     Simple MLP
     """
 
-    def __init__(self, n_feats, n_class, fc_hidden=512):
+    def __init__(self, in_channels, hidden_channels, dropout):
         """
         Args:
             n_feats (int): number of input features.
@@ -16,16 +21,30 @@ class BaselineModel(nn.Module):
         """
         super().__init__()
 
-        self.net = Sequential(
-            # people say it can approximate any function...
-            nn.Linear(in_features=n_feats, out_features=fc_hidden),
+        # init av-hubert model
+        # fairseq.utils.import_user_module(Namespace(user_dir='/home/runtime57/hse/coursework_2/deepfake_detection/src/model/av_hubert/avhubert'))
+        ckpt_path = '/home/runtime57/hse/coursework_2/deepfake_detection/src/model/av_hubert/ckpt/base_vox_433h.pt'
+        models, cfg, task = fairseq.checkpoint_utils.load_model_ensemble_and_task([ckpt_path])
+        self.avhubert = models[0]
+        if hasattr(models[0], 'decoder'):
+            print(f"Checkpoint: fine-tuned")
+            self.avhubert = models[0].encoder.w2v_model
+        else:
+            print(f"Checkpoint: pre-trained w/o fine-tuning")
+        self.avhubert.eval()
+        
+        # init ViViT
+        self.vivit = VivitModel.from_pretrained("google/vivit-b-16x2-kinetics400").eval()
+
+        self.mlp = Sequential(
+            nn.Linear(in_features=in_channels, out_features=hidden_channels),
             nn.ReLU(),
-            nn.Linear(in_features=fc_hidden, out_features=fc_hidden),
+            nn.Linear(in_features=hidden_channels, out_features=hidden_channels // 2),
             nn.ReLU(),
-            nn.Linear(in_features=fc_hidden, out_features=n_class),
+            nn.Linear(in_features=hidden_channels // 2, out_features=2),
         )
 
-    def forward(self, data_object, **batch):
+    def forward(self, vivit_frames, av_input, **batch):
         """
         Model forward method.
 
@@ -34,7 +53,12 @@ class BaselineModel(nn.Module):
         Returns:
             output (dict): output dict containing logits.
         """
-        return {"logits": self.net(data_object)}
+
+        vivit_feats = self._extract_feats(av_input, vivit_frames)
+        # av_pooled_feats = av_feats.mean(dim=1)
+        # feats = torch.cat([av_pooled_feats, vivit_feats], dim=1)
+
+        return {"logits": self.mlp(vivit_feats)}
 
     def __str__(self):
         """
@@ -50,3 +74,9 @@ class BaselineModel(nn.Module):
         result_info = result_info + f"\nTrainable parameters: {trainable_parameters}"
 
         return result_info
+
+    def _extract_feats(self, av_input, vivit_frames):
+         with torch.no_grad():
+            # av_feats, _ = self.avhubert.extract_finetune(source=av_input["source"], padding_mask=av_input["padding_mask"], output_layer=None)
+            vivit_feats = self.vivit(pixel_values=vivit_frames).last_hidden_state[:, 0, :]
+            return vivit_feats

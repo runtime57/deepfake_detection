@@ -22,7 +22,7 @@ def generate_split(random_state=79098):
 
     print("Generating Splits")
 
-    data_path = ROOT_PATH / "data" / "FakeAVCeleb_v1.2" / "meta_data.csv"
+    data_path = ROOT_PATH / "data" / "FakeAVCeleb" / "meta_data.csv"
 
     data = []
     with open(data_path, newline='') as metadata:
@@ -81,3 +81,29 @@ def generate_split(random_state=79098):
         shuffle(test_groups[method])
         (test_path / f"test-{method}").mkdir(exist_ok=True, parents=True)
         write_json(test_groups[method], str(test_path / f"test-{method}" / "split.json"))
+    print("Success")
+
+
+def gen_one_batch():
+    print("Generating One Batch")
+
+    data_path = ROOT_PATH / "data" / "miniFakeAVCeleb" / "meta_data.csv"
+    data = []
+    with open(data_path, newline='') as metadata:
+        reader = DictReader(metadata)
+        for row in reader:
+            data.append({
+                'source': row['source'],
+                'target': row['target1'],
+                'method': row['method'],
+                'type': row['type'],
+                'race': row['race'],
+                'gender': row['gender'],
+                'path': 'data/' + row[''] + '/' + row['path']
+            })
+    shuffle(data)
+
+    one_batch_path = ROOT_PATH / "data" / "fakeavcelebs" / "one_batch"
+    one_batch_path.mkdir(exist_ok=True, parents=True)
+    write_json(data, str(one_batch_path / "split.json"))
+    print("Success")

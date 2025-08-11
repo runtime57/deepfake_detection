@@ -1,4 +1,5 @@
 _target_: src.model.BaselineModel
-n_feats: 1024
-fc_hidden: 512
-n_class: 10
+in_channels: 768
+hidden_channels: 512
+dropout: 0.1
+

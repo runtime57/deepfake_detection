@@ -52,6 +52,7 @@ class Trainer(BaseTrainer):
             metrics.update(loss_name, batch[loss_name].item())
 
         for met in metric_funcs:
+            print(met.name)
             metrics.update(met.name, met(**batch))
         return batch
 
