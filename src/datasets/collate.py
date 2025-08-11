@@ -3,7 +3,7 @@ import torch
 max_sample_size = 196
 
 def collate_fn(dataset_items):
-    """
+    '''
     Collate and pad fields in the dataset items.
     Converts individual items into a batch.
 
@@ -13,23 +13,20 @@ def collate_fn(dataset_items):
     Returns:
         result_batch (dict[Tensor]): dict, containing batch-version
             of the tensors.
-    """
+    '''
 
     result_batch = {}
 
-    result_batch["vivit_frames"] = torch.cat(
-        [elem["vivit_frames"] for elem in dataset_items], dim=0
+    result_batch['vivit_frames'] = torch.cat(
+        [elem['vivit_frames'] for elem in dataset_items], dim=0
     )
-    result_batch["labels"] = torch.tensor([elem["labels"] for elem in dataset_items])
+    result_batch['labels'] = torch.tensor([elem['labels'] for elem in dataset_items])
 
-    result_batch["av_input"] = collater(dataset_items)
-    print(result_batch['av_input']['source']['video'].shape)
-    
+    result_batch['av_video'], result_batch['av_audio'], result_batch['av_mask'] = collater(dataset_items)
     return result_batch
 
 def collater(samples):
-    audio_source, video_source = [s["av_audio"] for s in samples], [s["av_frames"] for s in samples]
-    print(audio_source[0].shape, video_source[0].shape)
+    audio_source, video_source = [s['av_audio'] for s in samples], [s['av_frames'] for s in samples]
     if audio_source[0] is None:
         audio_source = None
     if video_source[0] is None:
@@ -38,20 +35,16 @@ def collater(samples):
         audio_sizes = [len(s) for s in audio_source]
     else:
         audio_sizes = [len(s) for s in video_source]
-    
     audio_size = min(min(audio_sizes), max_sample_size)
     if audio_source is not None:
         collated_audios, padding_mask, audio_starts = collater_audio(audio_source, audio_size)
     else:
         collated_audios, audio_starts = None, None
     if video_source is not None:
-        print('vid not none')
         collated_videos, padding_mask, audio_starts = collater_audio(video_source, audio_size, audio_starts)
     else:
         collated_videos = None
-    source = {"audio": collated_audios, "video": collated_videos}
-    net_input = {"source": source, "padding_mask": padding_mask}
-    return net_input
+    return collated_videos, collated_audios, padding_mask
 
 def collater_audio(audios, audio_size, audio_starts=None):
     audio_feat_shape = list(audios[0].shape[1:])
@@ -66,7 +59,6 @@ def collater_audio(audios, audio_size, audio_starts=None):
         if diff == 0:
             collated_audios[i] = audio
         elif diff < 0: # never should go here, because we take minimal length
-            print("FUUUUUCK")
             exit(0)
             collated_audios[i] = torch.cat(
                 [audio, audio.new_full([-diff]+audio_feat_shape, 0.0)]
@@ -77,10 +69,8 @@ def collater_audio(audios, audio_size, audio_starts=None):
                 audio, audio_size, audio_starts[i] if start_known else None
             )
     if len(audios[0].shape) == 2:
-        print('here 1')
         collated_audios = collated_audios.transpose(1, 2) # [B, T, F] -> [B, F, T]
     else:
-        print('here 2')
         collated_audios = collated_audios.permute((0, 4, 1, 2, 3)).contiguous() # [B, T, H, W, C] -> [B, C, T, H, W]
     return collated_audios, padding_mask, audio_starts
 

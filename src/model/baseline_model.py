@@ -31,20 +31,21 @@ class BaselineModel(nn.Module):
             self.avhubert = models[0].encoder.w2v_model
         else:
             print(f"Checkpoint: pre-trained w/o fine-tuning")
+        self.avhubert.cuda()
         self.avhubert.eval()
         
         # init ViViT
         self.vivit = VivitModel.from_pretrained("google/vivit-b-16x2-kinetics400").eval()
 
         self.mlp = Sequential(
-            nn.Linear(in_features=in_channels, out_features=hidden_channels),
+            nn.Linear(in_features=in_channels*2, out_features=hidden_channels),
             nn.ReLU(),
             nn.Linear(in_features=hidden_channels, out_features=hidden_channels // 2),
             nn.ReLU(),
             nn.Linear(in_features=hidden_channels // 2, out_features=2),
         )
 
-    def forward(self, vivit_frames, av_input, **batch):
+    def forward(self, vivit_frames, av_video, av_audio, **batch):
         """
         Model forward method.
 
@@ -54,11 +55,11 @@ class BaselineModel(nn.Module):
             output (dict): output dict containing logits.
         """
 
-        vivit_feats = self._extract_feats(av_input, vivit_frames)
-        # av_pooled_feats = av_feats.mean(dim=1)
-        # feats = torch.cat([av_pooled_feats, vivit_feats], dim=1)
+        av_feats, vivit_feats = self._extract_feats(vivit_frames, av_video, av_audio)
+        av_pooled_feats = av_feats.mean(dim=1)
+        feats = torch.cat([av_pooled_feats, vivit_feats], dim=1)
 
-        return {"logits": self.mlp(vivit_feats)}
+        return {"logits": self.mlp(feats)}
 
     def __str__(self):
         """
@@ -75,8 +76,9 @@ class BaselineModel(nn.Module):
 
         return result_info
 
-    def _extract_feats(self, av_input, vivit_frames):
+    def _extract_feats(self, vivit_frames, av_video, av_audio):
          with torch.no_grad():
-            # av_feats, _ = self.avhubert.extract_finetune(source=av_input["source"], padding_mask=av_input["padding_mask"], output_layer=None)
+            # print(av_video.device, av_audio.device, av_mask.device)
+            av_feats, _ = self.avhubert.extract_finetune(source={'video': av_video, 'audio': av_audio}, padding_mask=None, output_layer=None)
             vivit_feats = self.vivit(pixel_values=vivit_frames).last_hidden_state[:, 0, :]
-            return vivit_feats
+            return av_feats, vivit_feats

@@ -79,7 +79,7 @@ class FakeAVCelebsDataset(BaseDataset):
             vivit_frames = vivit_preprocess(row_path)
 
             element_path = data_path / f"{i:06}.safetensors"
-            element = {"av_audio": torch.from_numpy(av_audio), "av_frames": torch.from_numpy(av_frames), "vivit_frames": vivit_frames}
+            element = {"av_audio": torch.from_numpy(av_audio).float(), "av_frames": torch.from_numpy(av_frames).float(), "vivit_frames": vivit_frames}
             safetensors.torch.save_file(element, element_path)
 
             index.append({"path": str(element_path), "label": label})
@@ -142,7 +142,6 @@ class FakeAVCelebsDataset(BaseDataset):
 
         audio_fn = audio_fn.split(':')[0]
         sample_rate, wav_data = wavfile.read(audio_fn)
-        print(sample_rate, len(wav_data.shape))
         assert sample_rate == 16_000 and len(wav_data.shape) == 1
         audio_feats = logfbank(wav_data, samplerate=sample_rate).astype(np.float32) # [T, F]
         audio_feats = stacker(audio_feats) # [T/stack_order_audio, F*stack_order_audio]
@@ -155,12 +154,9 @@ class FakeAVCelebsDataset(BaseDataset):
         return video_feats, audio_feats
 
     def hubert_load_video(self, video_fn):
-        print(custom_utils)
-        print(hasattr(custom_utils, "load_video"))
         feats = self.load_video(video_fn)
         feats = self.transform(feats)
         feats = np.expand_dims(feats, axis=-1)
-        print(feats.shape)
         return feats
     
     def load_video(self, path):

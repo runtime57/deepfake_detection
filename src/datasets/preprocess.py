@@ -139,11 +139,9 @@ def av_preprocess(path):
     predictor = dlib.shape_predictor(FACE_PREDICTOR_PATH)
     cnn_detector = dlib.cnn_face_detection_model_v1(CNN_DETECTOR_PATH)
     mean_face_landmarks = np.load(MEAN_FACE_PATH)
-    # print(str(ROOT_PATH))
     path = str(ROOT_PATH / path)
     mouth_roi_path = '/'.join(path.split('/')[:-1] + ['mouth_roi_' + path.split('/')[-1]])
     wav_path = path.replace('mp4', 'wav')
-    print(mouth_roi_path, wav_path)
     preprocess_video(path, mouth_roi_path, detector, cnn_detector, predictor, mean_face_landmarks)
     preprocess_audio(path, wav_path, '/usr/bin/ffmpeg')
     return mouth_roi_path, wav_path

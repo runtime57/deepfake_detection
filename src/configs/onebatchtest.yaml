@@ -16,14 +16,14 @@ lr_scheduler:
 loss_function:
   _target_: src.loss.CrossEntropyLoss
 trainer:
-  log_step: 5
+  log_step: 50
   n_epochs: 30
   epoch_len: 500
-  device_tensors: ["vivit_frames", "labels"] # which tensors should be on device (ex. GPU)
+  device_tensors: ["vivit_frames", "av_video", "av_audio", "labels"] # which tensors should be on device (ex. GPU)
   resume_from: null # null or path to the checkpoint dir with *.pth and config.yaml
   device: auto # device name or "auto"
   override: False # if True, will override the previous run with the same name
-  monitor: "max test_MulticlassAccuracy" # "off" or "max/min metric_name", i.e. our goal is to maximize/minimize metric
+  monitor: "max test_Accuracy" # "off" or "max/min metric_name", i.e. our goal is to maximize/minimize metric
   save_period: 5 # checkpoint each save_period epochs in addition to the best epoch
   early_stop: ${trainer.n_epochs} # epochs for early stopping
   save_dir: "saved"

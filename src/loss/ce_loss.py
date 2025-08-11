@@ -29,6 +29,4 @@ class CrossEntropyLoss(nn.Module):
         Returns:
             losses (dict): dict containing calculated loss functions.
         """
-        print(labels)
-        print(logits)
         return {"loss": self.loss(logits, labels)}
