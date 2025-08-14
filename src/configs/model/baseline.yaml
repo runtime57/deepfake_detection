@@ -1,5 +1,7 @@
 _target_: src.model.BaselineModel
-in_channels: 768
+av_channels: 768
+vivit_channels: 768
+as_channels: 64
 hidden_channels: 512
 dropout: 0.1
 

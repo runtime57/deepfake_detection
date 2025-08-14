@@ -2,7 +2,7 @@ defaults:
   - model: baseline
   - writer: wandb
   - metrics: pages
-  - datasets: onebatchtest
+  - datasets: fakeavcelebs
   - dataloader: onebatchtest
   - transforms: example
   - _self_
@@ -18,7 +18,7 @@ loss_function:
 trainer:
   log_step: 50
   n_epochs: 30
-  epoch_len: 500
+  epoch_len: 4
   device_tensors: ["vivit_frames", "av_video", "av_audio", "aasist_audio", "labels"] # which tensors should be on device (ex. GPU)
   resume_from: null # null or path to the checkpoint dir with *.pth and config.yaml
   device: auto # device name or "auto"

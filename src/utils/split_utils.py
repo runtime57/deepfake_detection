@@ -3,6 +3,17 @@ from src.utils.io_utils import ROOT_PATH, read_json, write_json
 from sklearn.model_selection import train_test_split
 from csv import DictReader
 from random import shuffle
+from pathlib import Path
+
+
+def get_mp4_paths(directory='.'):
+    start_path = Path(directory)
+    mp4_list = [
+        str(file.absolute())
+        for file in start_path.rglob('*.mp4')
+    ]
+    vox_split = [{'path': '/'.join(full_path.split('/')[6:]), 'method': 'real'} for full_path in mp4_list if 'mouth_roi' not in full_path]
+    return vox_split
 
 
 def generate_split(random_state=79098):
@@ -71,14 +82,13 @@ def generate_split(random_state=79098):
 
     train_path = ROOT_PATH / "data" / "fakeavcelebs" / "train"
     train_path.mkdir(exist_ok=True, parents=True)
-    shuffle(train)
+    # train = get_mp4_paths(str(ROOT_PATH / 'data/VoxCelebTest'))[:3570] + train
     write_json(train, str(train_path / "split.json"))
 
     real = [row for row in data if row['source'] in test_ids and row['method'] == 'real']
     test_path = ROOT_PATH / "data" / "fakeavcelebs"
     for method in methods + ["set-1", "set-2"]:
         test_groups[method] += real
-        shuffle(test_groups[method])
         (test_path / f"test-{method}").mkdir(exist_ok=True, parents=True)
         write_json(test_groups[method], str(test_path / f"test-{method}" / "split.json"))
     print("Success")
@@ -102,7 +112,7 @@ def gen_one_batch():
                 'path': 'data/' + row[''] + '/' + row['path']
             })
     shuffle(data)
-
+    data += get_mp4_paths(str(ROOT_PATH / 'data/VoxCelebTest'))[:2]
     one_batch_path = ROOT_PATH / "data" / "fakeavcelebs" / "one_batch"
     one_batch_path.mkdir(exist_ok=True, parents=True)
     write_json(data, str(one_batch_path / "split.json"))

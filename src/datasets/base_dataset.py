@@ -61,7 +61,7 @@ class BaseDataset(Dataset):
         data_object = self.load_object(data_path)
         data_label = data_dict["label"]
 
-        instance_data = {"av_frames": data_object["av_frames"], "av_audio": data_object["av_audio"], "vivit_frames": data_object["vivit_frames"], "labels": data_label}
+        instance_data = {"av_frames": data_object["av_frames"], "av_audio": data_object["av_audio"], "vivit_frames": data_object["vivit_frames"], "aasist_audio": data_object["aasist_audio"], "labels": data_label}
         instance_data = self.preprocess_data(instance_data)
 
         return instance_data

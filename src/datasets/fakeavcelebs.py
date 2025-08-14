@@ -11,8 +11,7 @@ from python_speech_features import logfbank
 from src.datasets.base_dataset import BaseDataset
 from src.utils.io_utils import ROOT_PATH, read_json, write_json
 from src.utils.split_utils import generate_split, gen_one_batch
-from src.datasets.preprocess import vivit_preprocess, av_preprocess
-from src.model.av_hubert.avhubert import custom_utils as custom_utils
+from src.datasets.preprocess import Processor
 
 class FakeAVCelebsDataset(BaseDataset):
     """
@@ -31,17 +30,6 @@ class FakeAVCelebsDataset(BaseDataset):
         Args:
             name (str): partition name
         """
-
-        image_crop_size = 88
-        image_mean = 0.421
-        image_std = 0.165
-
-        self.transform = custom_utils.Compose([
-                custom_utils.Normalize( 0.0,255.0 ),
-                custom_utils.CenterCrop((image_crop_size, image_crop_size)),
-                custom_utils.Normalize(image_mean, image_std) ])
-
-
         index_path = ROOT_PATH / "data" / "fakeavcelebs" / name / "index.json"
         if index_path.exists():
             index = read_json(str(index_path))
@@ -62,27 +50,32 @@ class FakeAVCelebsDataset(BaseDataset):
             gen_one_batch()
         else:
             generate_split()
-        
+
         index = []
         data_path = ROOT_PATH / "data" / "fakeavcelebs" / name
         elements = read_json(str(data_path / "split.json"))
 
         print("Creating FakeAVCelebs Dataset")
-        for i, row in tqdm(enumerate(elements)):
+        
+        processor = Processor()
+        current_index = 0
+        failed = 0
+        for i, row in tqdm(enumerate(elements), total=len(elements)):
             # create dataset
-            row_path = row['path']
+            st_path = processor.run(row)
             label = 1 if row['method'] == 'real' else 0
-
-            video_fn, audio_fn = av_preprocess(row_path)
-            av_frames, av_audio = self.hubert_load_feature(video_fn, audio_fn)
-
-            vivit_frames = vivit_preprocess(row_path)
-
-            element_path = data_path / f"{i:06}.safetensors"
-            element = {"av_audio": torch.from_numpy(av_audio).float(), "av_frames": torch.from_numpy(av_frames).float(), "vivit_frames": vivit_frames}
+            if st_path is None:
+                failed += 1
+                print(f"Failed: {row['path']}")
+                continue
+            element = safetensors.torch.load_file(st_path)
+            element_path = data_path / f"{current_index:06}.safetensors"
+            current_index += 1
             safetensors.torch.save_file(element, element_path)
-
             index.append({"path": str(element_path), "label": label})
+        print(f"Total number: {len(elements)}")
+        print(f"Processed: {current_index}")
+        print(f"Failed: {failed}")
         write_json(index, str(data_path / "index.json"))
         return index
 
@@ -107,75 +100,10 @@ class FakeAVCelebsDataset(BaseDataset):
         av_audio = obj["av_audio"]
         av_frames = obj["av_frames"]
         vivit_frames = obj["vivit_frames"]
+        aasist_audio = obj["aasist_audio"]
         label = data_dict["label"]
 
-        instance_data = {"av_audio": av_audio, "av_frames": av_frames, "vivit_frames": vivit_frames, "labels": label}
+        instance_data = {"av_audio": av_audio, "av_frames": av_frames, "vivit_frames": vivit_frames, "aasist_audio": aasist_audio, "labels": label}
         instance_data = self.preprocess_data(instance_data)
 
         return instance_data
-
-
-    def hubert_load_feature(self, video_fn, audio_fn):
-        """
-        Load image and audio feature
-        Returns:
-        video_feats: numpy.ndarray of shape [T, H, W, 1], audio_feats: numpy.ndarray of shape [T, F]
-        """
-        def stacker(feats, stack_order=4):  # video in 25 fps, audio in 100 fps ==> stack_order=4  (check av_hubert/issues/85)
-            """
-            Concatenating consecutive audio frames
-            Args:
-            feats - numpy.ndarray of shape [T, F]
-            stack_order - int (number of neighboring frames to concatenate
-            Returns:
-            feats - numpy.ndarray of shape [T', F']
-            """
-            feat_dim = feats.shape[1]
-            if len(feats) % stack_order != 0:
-                res = stack_order - len(feats) % stack_order
-                res = np.zeros([res, feat_dim]).astype(feats.dtype)
-                feats = np.concatenate([feats, res], axis=0)
-            feats = feats.reshape((-1, stack_order, feat_dim)).reshape(-1, stack_order*feat_dim)
-            return feats
-
-        video_feats = self.hubert_load_video(video_fn) # [T, H, W, 1]
-
-        audio_fn = audio_fn.split(':')[0]
-        sample_rate, wav_data = wavfile.read(audio_fn)
-        assert sample_rate == 16_000 and len(wav_data.shape) == 1
-        audio_feats = logfbank(wav_data, samplerate=sample_rate).astype(np.float32) # [T, F]
-        audio_feats = stacker(audio_feats) # [T/stack_order_audio, F*stack_order_audio]
-
-        diff = len(audio_feats) - len(video_feats)
-        if diff < 0:
-            audio_feats = np.concatenate([audio_feats, np.zeros([-diff, audio_feats.shape[-1]], dtype=audio_feats.dtype)])
-        elif diff > 0:
-            audio_feats = audio_feats[:-diff]
-        return video_feats, audio_feats
-
-    def hubert_load_video(self, video_fn):
-        feats = self.load_video(video_fn)
-        feats = self.transform(feats)
-        feats = np.expand_dims(feats, axis=-1)
-        return feats
-    
-    def load_video(self, path):
-        for i in range(3):
-            try:
-                cap = cv2.VideoCapture(path)
-                frames = []
-                while True:
-                    ret, frame = cap.read()
-                    if ret:
-                        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                        frames.append(frame)
-                    else:
-                        break
-                frames = np.stack(frames)
-                return frames
-            except Exception:
-                print(f"failed loading {path} ({i} / 3)")
-                if i == 2:
-                    raise ValueError(f"Unable to load {path}")
-
-FakeAVCelebsDataset(name="one_batch")

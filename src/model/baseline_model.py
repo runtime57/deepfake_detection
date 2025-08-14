@@ -5,6 +5,7 @@ import torchvision
 import fairseq
 from argparse import Namespace
 from transformers import VivitModel
+from .AASIST import aasist_encoder
 
 
 class BaselineModel(nn.Module):
@@ -12,7 +13,7 @@ class BaselineModel(nn.Module):
     Simple MLP
     """
 
-    def __init__(self, in_channels, hidden_channels, dropout):
+    def __init__(self, av_channels, vivit_channels, as_channels, hidden_channels, dropout):
         """
         Args:
             n_feats (int): number of input features.
@@ -22,7 +23,7 @@ class BaselineModel(nn.Module):
         super().__init__()
 
         # init av-hubert model
-        # fairseq.utils.import_user_module(Namespace(user_dir='/home/runtime57/hse/coursework_2/deepfake_detection/src/model/av_hubert/avhubert'))
+        # first time need to run this command: fairseq.utils.import_user_module(Namespace(user_dir='/home/runtime57/hse/coursework_2/deepfake_detection/src/model/av_hubert/avhubert'))
         ckpt_path = '/home/runtime57/hse/coursework_2/deepfake_detection/src/model/av_hubert/ckpt/base_vox_433h.pt'
         models, cfg, task = fairseq.checkpoint_utils.load_model_ensemble_and_task([ckpt_path])
         self.avhubert = models[0]
@@ -34,18 +35,19 @@ class BaselineModel(nn.Module):
         self.avhubert.cuda()
         self.avhubert.eval()
         
-        # init ViViT
         self.vivit = VivitModel.from_pretrained("google/vivit-b-16x2-kinetics400").eval()
-
+        
+        self.aasist = aasist_encoder()
+        
         self.mlp = Sequential(
-            nn.Linear(in_features=in_channels*2, out_features=hidden_channels),
+            nn.Linear(in_features=av_channels+vivit_channels+as_channels, out_features=hidden_channels),
             nn.ReLU(),
             nn.Linear(in_features=hidden_channels, out_features=hidden_channels // 2),
             nn.ReLU(),
             nn.Linear(in_features=hidden_channels // 2, out_features=2),
         )
 
-    def forward(self, vivit_frames, av_video, av_audio, **batch):
+    def forward(self, vivit_frames, av_video, av_audio, aasist_audio, **batch):
         """
         Model forward method.
 
@@ -54,10 +56,14 @@ class BaselineModel(nn.Module):
         Returns:
             output (dict): output dict containing logits.
         """
+        
+        as_feats = self.aasist(aasist_audio)
+        as_pooled_feats = as_feats.mean(dim=1)
 
-        av_feats, vivit_feats = self._extract_feats(vivit_frames, av_video, av_audio)
+        av_feats, vivit_feats = self._extract_feats(vivit_frames, av_video.float(), av_audio.float())
         av_pooled_feats = av_feats.mean(dim=1)
-        feats = torch.cat([av_pooled_feats, vivit_feats], dim=1)
+
+        feats = torch.cat([av_pooled_feats, vivit_feats, as_pooled_feats], dim=1)
 
         return {"logits": self.mlp(feats)}
 
