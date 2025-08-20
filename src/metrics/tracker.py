@@ -40,7 +40,37 @@ class MetricTracker:
         self._data.loc[key, "total"] += value * n
         self._data.loc[key, "counts"] += n
         self._data.loc[key, "average"] = self._data.total[key] / self._data.counts[key]
+    
+    def update(self, key, value, n=1):
+        """
+        Update metrics DataFrame with new value.
 
+        Args:
+            key (str): metric name.
+            value (float): metric value on the batch.
+            n (int): how many times to count this value.
+        """
+        # if self.writer is not None:
+        #     self.writer.add_scalar(key, value)
+        self._data.loc[key, "total"] += value * n
+        self._data.loc[key, "counts"] += n
+        self._data.loc[key, "average"] = self._data.total[key] / self._data.counts[key]
+
+    def update_global(self, key, num, denum):
+        """
+        Update metrics DataFrame with new value.
+
+        Args:
+            key (str): metric name.
+            value (float): metric value on the batch.
+            n (int): how many times to count this value.
+        """
+        # if self.writer is not None:
+        #     self.writer.add_scalar(key, value)
+        self._data.loc[key, "total"] += num
+        self._data.loc[key, "counts"] += denum
+        self._data.loc[key, "average"] = 0 if self._data.counts[key] == 0 else self._data.total[key] / self._data.counts[key]
+    
     def avg(self, key):
         """
         Return average value for a given metric.

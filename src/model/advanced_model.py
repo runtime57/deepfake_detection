@@ -13,7 +13,7 @@ class BaselineModel(nn.Module):
     Simple MLP
     """
 
-    def __init__(self, av_channels, vivit_channels, as_channels, hidden_channels, dropout):
+    def __init__(self, av_channels, vivit_channels, hidden_channels, dropout):
         """
         Args:
             n_feats (int): number of input features.
@@ -40,10 +40,6 @@ class BaselineModel(nn.Module):
         self.vivit = VivitModel.from_pretrained("google/vivit-b-16x2-kinetics400")
         self.vivit = self.vivit.to(self.device)
         self.vivit.eval()
-
-        self.aasist = aasist_encoder()
-        self.aasist = self.aasist.to(self.device)
-        self.aasist.eval()
 
         self.mlp = Sequential(
             nn.Linear(in_features=av_channels+vivit_channels+as_channels, out_features=hidden_channels),
@@ -91,9 +87,9 @@ class BaselineModel(nn.Module):
         return result_info
 
     def _extract_feats(self, vivit_frames, av_video, av_audio, aasist_audio):
-        as_feats = self.aasist(aasist_audio)
-        with torch.no_grad():
+         with torch.no_grad():
             # print(av_video.device, av_audio.device, av_mask.device)
+            as_feats = self.aasist(aasist_audio)
             av_feats, _ = self.avhubert.extract_finetune(source={'video': av_video, 'audio': av_audio}, padding_mask=None, output_layer=None)
             vivit_feats = self.vivit(pixel_values=vivit_frames).last_hidden_state[:, 0, :]
             return as_feats, av_feats, vivit_feats

@@ -18,7 +18,7 @@ def av_video_pad(x, max_len = 75):
         return x[:max_len].clone()
     # if too short
     num_repeats = int(max_len / x_len) + 1
-    padded_x = x.repeat(num_repeats, 1, 1)[:max_len]
+    padded_x = x.repeat(num_repeats, 1, 1, 1)[:max_len]
     return padded_x.clone()
 
 def av_audio_pad(x, max_len = 75):

@@ -32,4 +32,4 @@ class AccuracyMetric(BaseMetric):
         dclasses = logits.argmax(dim=-1).to(device)
         dlabels = labels.to(device)
         result = (dclasses == dlabels).mean(dtype=torch.float32)
-        return result
+        return result.item()

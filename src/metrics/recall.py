@@ -17,6 +17,7 @@ class RecallMetric(BaseMetric):
             device (str): device for the metric calculation (and tensors).
         """
         super().__init__(*args, **kwargs)
+        self.is_global = True
 
     def __call__(self, logits: torch.Tensor, labels: torch.Tensor, **kwargs):
         """
@@ -33,4 +34,4 @@ class RecallMetric(BaseMetric):
         dlabels = labels.to(device)
         true_positive = ((dclasses == dlabels) * dlabels).sum(dtype=torch.float32)
         false_negative = ((dclasses != dlabels) * dlabels).sum(dtype=torch.float32)
-        return true_positive / (true_positive + false_negative)
+        return true_positive.item(), (true_positive + false_negative).item()

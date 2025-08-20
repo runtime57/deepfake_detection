@@ -60,6 +60,7 @@ class FakeAVCelebsDataset(BaseDataset):
         processor = Processor()
         current_index = 0
         failed = 0
+        regen = 0
         for i, row in tqdm(enumerate(elements), total=len(elements)):
             # create dataset
             st_path = processor.run(row)
@@ -69,6 +70,11 @@ class FakeAVCelebsDataset(BaseDataset):
                 print(f"Failed: {row['path']}")
                 continue
             element = safetensors.torch.load_file(st_path)
+            if element['vivit_frames'].shape[1] != 32:
+                regen += 1
+                print(f"Regenerating: { regen }")
+                processor.run(row, must=1)
+                element = safetensors.torch.load_file(st_path)
             element_path = data_path / f"{current_index:06}.safetensors"
             current_index += 1
             safetensors.torch.save_file(element, element_path)

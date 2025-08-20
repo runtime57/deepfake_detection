@@ -27,7 +27,7 @@ class ViViT_Processor():
     def __init__(self):
         self.image_processor = VivitImageProcessor.from_pretrained("google/vivit-b-16x2-kinetics400")
 
-    def vivit_preprocess(self, file_path):
+    def vivit_preprocess(self, file_path, must=0):
         """
         Args:
             file_path (str): filename of the mp4 file.
@@ -41,8 +41,11 @@ class ViViT_Processor():
         indices = self.sample_frame_indices(clip_len=32, frame_sample_rate=2, seg_len=container.streams.video[0].frames)
         video = self.read_video_pyav(container=container, indices=indices)
 
-        frames = self.image_processor(list(video), return_tensors="pt")
-        return frames.pixel_values.clone()
+        frames = self.image_processor(list(video), return_tensors="pt").pixel_values.clone()
+        if frames.shape[1] < 32:
+            num = 32 // frames.shape[1] + 1
+            frames = frames.repeat(1, num, 1, 1, 1)[:, :32, :, :]
+        return frames
 
 
     def read_video_pyav(self, container, indices):
@@ -79,7 +82,7 @@ class ViViT_Processor():
         '''
         converted_len = int(clip_len * frame_sample_rate)
         end_idx = np.random.randint(min(converted_len, seg_len-1), seg_len)
-        start_idx = end_idx - converted_len
+        start_idx = max(0, end_idx - converted_len)
         indices = np.linspace(start_idx, end_idx, num=clip_len)
         indices = np.clip(indices, start_idx, end_idx - 1).astype(np.int64)
         return indices
@@ -202,16 +205,16 @@ class Processor:
         self.avp = AV_Processor()
         self.vvtp = ViViT_Processor()
 
-    def run(self, row):
+    def run(self, row, must=0):
         row_path = row['path']
         label = 1 if row['method'] == 'real' else 0
         
         st_path = str(ROOT_PATH / row_path.replace('mp4', 'safetensors'))
-        # if (os.path.exists(st_path)):
-        #     return st_path
-        video_fn, audio_fn = self.avp.av_preprocess(row_path)
+        if not must and os.path.exists(st_path):
+            return st_path
+        video_fn, audio_fn = self.avp.av_preprocess(row_path, must)
         av_frames, av_audio = self.hubert_load_feature(video_fn, audio_fn)
-        vivit_frames = self.vvtp.vivit_preprocess(row_path)
+        vivit_frames = self.vvtp.vivit_preprocess(row_path, must)
         aasist_audio = aasist_load(audio_fn)
         element = {
             "av_audio": av_crop(torch.from_numpy(av_audio)),

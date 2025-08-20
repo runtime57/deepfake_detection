@@ -12,6 +12,7 @@ class BaseMetric:
             name (str | None): metric name to use in logger and writer.
         """
         self.name = name if name is not None else type(self).__name__
+        self.is_global = False
 
     @abstractmethod
     def __call__(self, **batch):

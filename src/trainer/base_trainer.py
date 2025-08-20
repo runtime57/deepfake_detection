@@ -29,7 +29,7 @@ class BaseTrainer:
         writer,
         epoch_len=None,
         skip_oom=True,
-        batch_transforms=None,
+        batch_transforms=None
     ):
         """
         Args:
