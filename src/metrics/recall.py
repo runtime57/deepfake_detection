@@ -29,9 +29,8 @@ class RecallMetric(BaseMetric):
         Returns:
             metric (float): calculated metric.
         """
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        dclasses = logits.argmax(dim=-1).to(device)
-        dlabels = labels.to(device)
+        dclasses = logits.argmax(dim=-1)
+        dlabels = labels.to(logits.device)
         true_positive = ((dclasses == dlabels) * dlabels).sum(dtype=torch.float32)
         false_negative = ((dclasses != dlabels) * dlabels).sum(dtype=torch.float32)
         return true_positive.item(), (true_positive + false_negative).item()

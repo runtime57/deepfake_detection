@@ -205,7 +205,7 @@ class Processor:
         self.avp = AV_Processor()
         self.vvtp = ViViT_Processor()
 
-    def run(self, row, must=0):
+    def run(self, row, must=1):
         row_path = row['path']
         label = 1 if row['method'] == 'real' else 0
         
@@ -291,6 +291,3 @@ class Processor:
                     av = self.avp.av_preprocess('/'.join(path.split('/')[:-1] + [path.split('/')[-1].replace('mouth_roi_', '')]), must=1)
                 if i == 4:
                     raise ValueError(f"Unable to load {path}")
-
-   
-

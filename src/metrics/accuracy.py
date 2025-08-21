@@ -28,8 +28,7 @@ class AccuracyMetric(BaseMetric):
         Returns:
             metric (float): calculated metric.
         """
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        dclasses = logits.argmax(dim=-1).to(device)
-        dlabels = labels.to(device)
+        dclasses = logits.argmax(dim=-1)
+        dlabels = labels.to(logits.device)
         result = (dclasses == dlabels).mean(dtype=torch.float32)
         return result.item()

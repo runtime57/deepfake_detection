@@ -8,6 +8,13 @@ class WeightedCrossEntropyLoss(nn.Module):
     """
     Weighted CrossEntropyLoss
     """
+    def __init__(self):
+        super().__init__()
+        real = 4000
+        fake = 16340
+        weights = torch.tensor([(real + fake) / (2 * fake), (real + fake) / (2 * real)])
+        self.loss = nn.CrossEntropyLoss(weight=weights)
+        
     def forward(self, logits: torch.Tensor, labels: torch.Tensor, **batch):
         """
         Loss function calculation logic.
@@ -26,6 +33,4 @@ class WeightedCrossEntropyLoss(nn.Module):
         Returns:
             losses (dict): dict containing calculated loss functions.
         """
-        weights = compute_class_weight(class_weight="balanced", classes=np.unique(labels.numpy()), y=labels.numpy())
-        weighted_loss = nn.CrossEntropyLoss(weight=weights)
-        return {"loss": weighted_loss(logits, labels)}
+        return {"loss": self.loss(logits, labels)}

@@ -19,10 +19,11 @@ class FakeAVCelebsDataset(BaseDataset):
         path (str):  path to elemnt
         label (int): fake or real
 
-    and each element contains:
-        av_audio (torch.Tensor):     preprocessed audio for AV-Hubert
-        av_frames (torch.Tensor):    preprocessed frames for AV-Hubert
-        vivit_frames (torch.Tensor): preprocessed frames for ViViT
+    and each element contains (cropped, but no padded):
+        av_audio (torch.Tensor):     preprocessed audio for AV-Hubert (3 seconds / 75 frames)
+        av_frames (torch.Tensor):    preprocessed frames for AV-Hubert (3 seconds / 75 frames)
+        vivit_frames (torch.Tensor): preprocessed frames for ViViT (32 frames)
+        aasist_audio (torch.Tensor): extracted audio for AASIST (4 seconds / 64600 ticks)
     """
 
     def __init__(self, name="train", *args, **kwargs):
@@ -70,11 +71,6 @@ class FakeAVCelebsDataset(BaseDataset):
                 print(f"Failed: {row['path']}")
                 continue
             element = safetensors.torch.load_file(st_path)
-            if element['vivit_frames'].shape[1] != 32:
-                regen += 1
-                print(f"Regenerating: { regen }")
-                processor.run(row, must=1)
-                element = safetensors.torch.load_file(st_path)
             element_path = data_path / f"{current_index:06}.safetensors"
             current_index += 1
             safetensors.torch.save_file(element, element_path)

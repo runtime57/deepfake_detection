@@ -117,7 +117,6 @@ def gen_one_batch():
                 'path': 'data/' + row[''] + '/' + row['path']
             })
     shuffle(data)
-    data += get_mp4_paths(str(ROOT_PATH / 'data/VoxCelebTest'))[:2]
     one_batch_path = ROOT_PATH / "data" / "fakeavcelebs" / "one_batch"
     one_batch_path.mkdir(exist_ok=True, parents=True)
     write_json(data, str(one_batch_path / "split.json"))
