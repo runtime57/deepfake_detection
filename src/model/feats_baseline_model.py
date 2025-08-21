@@ -8,7 +8,7 @@ from transformers import VivitModel
 from .AASIST import aasist_encoder
 
 
-class BaselineModel(nn.Module):
+class FeatsBaselineModel(nn.Module):
     """
     Simple MLP
     """
@@ -21,19 +21,6 @@ class BaselineModel(nn.Module):
             fc_hidden (int): number of hidden features.
         """
         super().__init__()
-        # init av-hubert model
-        # first time need to run this command: fairseq.utils.import_user_module(Namespace(user_dir='/home/runtime57/hse/coursework_2/deepfake_detection/src/model/av_hubert/avhubert'))
-        ckpt_path = '/home/runtime57/hse/coursework_2/deepfake_detection/src/model/av_hubert/ckpt/base_vox_433h.pt'
-        models, cfg, task = fairseq.checkpoint_utils.load_model_ensemble_and_task([ckpt_path])
-        self.avhubert = models[0]
-        if hasattr(models[0], 'decoder'):
-            self.avhubert = models[0].encoder.w2v_model
-        for p in self.avhubert.parameters():
-            p.requires_grad = False
-
-        self.vivit = VivitModel.from_pretrained("google/vivit-b-16x2-kinetics400")
-        for p in self.vivit.parameters():
-            p.requires_grad = False
 
         self.aasist = aasist_encoder()
 
@@ -45,7 +32,7 @@ class BaselineModel(nn.Module):
             nn.Linear(in_features=hidden_channels // 2, out_features=2),
         )
 
-    def forward(self, vivit_frames, av_video, av_audio, aasist_audio, **batch):
+    def forward(self, vivit_feats, av_feats, aasist_audio, **batch):
         """
         Model forward method.
 
@@ -55,13 +42,10 @@ class BaselineModel(nn.Module):
             output (dict): output dict containing logits.
         """
         
-
-        as_feats, av_feats, vivit_feats = self._extract_feats(vivit_frames, av_video, av_audio, aasist_audio)
+        as_feats = self.aasist(aasist_audio)
         as_pooled_feats = as_feats.mean(dim=1)
 
-        av_pooled_feats = av_feats.mean(dim=1)
-
-        feats = torch.cat([av_pooled_feats, vivit_feats, as_pooled_feats], dim=1)
+        feats = torch.cat([av_feats, vivit_feats, as_pooled_feats], dim=1)
 
         return {"logits": self.mlp(feats)}
 
@@ -81,7 +65,7 @@ class BaselineModel(nn.Module):
         return result_info
 
     def _extract_feats(self, vivit_frames, av_video, av_audio, aasist_audio):
-        as_feats = self.aasist(aasist_audio)
+        
         with torch.inference_mode():
             av_feats, _ = self.avhubert.extract_finetune(source={'video': av_video, 'audio': av_audio}, padding_mask=None, output_layer=None)
             vivit_feats = self.vivit(pixel_values=vivit_frames).last_hidden_state[:, 0, :]

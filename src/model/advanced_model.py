@@ -41,13 +41,7 @@ class BaselineModel(nn.Module):
         self.vivit = self.vivit.to(self.device)
         self.vivit.eval()
 
-        self.mlp = Sequential(
-            nn.Linear(in_features=av_channels+vivit_channels+as_channels, out_features=hidden_channels),
-            nn.ReLU(),
-            nn.Linear(in_features=hidden_channels, out_features=hidden_channels // 2),
-            nn.ReLU(),
-            nn.Linear(in_features=hidden_channels // 2, out_features=2),
-        )
+        
 
     def forward(self, vivit_frames, av_video, av_audio, aasist_audio, **batch):
         """
