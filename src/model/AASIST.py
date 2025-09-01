@@ -3,6 +3,7 @@ AASIST
 Copyright (c) 2021-present NAVER Corp.
 MIT license
 """
+# https://github.com/clovaai/aasist/blob/main/models/AASIST.py
 
 import random
 from typing import Union
@@ -182,7 +183,7 @@ class HtrgGraphAttentionLayer(nn.Module):
         x1 = x.narrow(1, 0, num_type1)
         x2 = x.narrow(1, num_type1, num_type2)
 
-        return x1, x2, master
+        return x1, x2, master, att_map
 
     def _update_master(self, x, master):
 
@@ -466,7 +467,7 @@ class Residual_block(nn.Module):
         return out
 
 
-class AASIST(nn.Module):
+class Model(nn.Module):
     def __init__(self, d_args):
         super().__init__()
 
@@ -605,7 +606,6 @@ class AASIST(nn.Module):
         output = self.out_layer(last_hidden)
 
         return last_hidden, output
-
 
 class aasist_encoder(nn.Module):
     def __init__(self):

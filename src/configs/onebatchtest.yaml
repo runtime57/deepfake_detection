@@ -1,5 +1,5 @@
 defaults:
-  - model: featsbaseline
+  - model: mstcn_model
   - writer: wandb_onebatch
   - metrics: pages
   - datasets: onebatchtest
@@ -14,12 +14,12 @@ lr_scheduler:
   gamma: 0.9
   step_size: ${trainer.epoch_len}
 loss_function:
-  _target_: src.loss.WeightedCrossEntropyLoss
+  _target_: src.loss.CrossEntropyLoss
 trainer:
   log_step: 50
   n_epochs: 30
-  epoch_len: 1
-  device_tensors: ["vivit_frames", "av_video", "av_audio", "aasist_audio", "labels"] # which tensors should be on device (ex. GPU)
+  epoch_len: 10
+  device_tensors: ["vivit_feats", "av_feats", "aasist_audio", "labels"] # which tensors should be on device (ex. GPU)
   resume_from: null # null or path to the checkpoint dir with *.pth and config.yaml
   device: auto # device name or "auto"
   override: True # if True, will override the previous run with the same name

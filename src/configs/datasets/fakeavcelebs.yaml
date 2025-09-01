@@ -6,3 +6,7 @@ test:
   _target_: src.datasets.FeatsFakeAVCelebsDataset
   name: "test-set-1"
   instance_transforms: ${transforms.instance_transforms.inference}
+eval:
+  _target_: src.datasets.FeatsFakeAVCelebsDataset
+  name: "test-set-2"
+  instance_transforms: ${transforms.instance_transforms.inference}

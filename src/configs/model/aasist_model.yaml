@@ -1,4 +1,4 @@
-_target_: src.model.FeatsBaselineModel
+_target_: src.model.AasistAsVivitModel
 av_channels: 768
 vivit_channels: 768
 as_channels: 64

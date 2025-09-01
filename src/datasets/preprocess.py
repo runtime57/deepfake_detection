@@ -205,7 +205,7 @@ class Processor:
         self.avp = AV_Processor()
         self.vvtp = ViViT_Processor()
 
-    def run(self, row, must=1):
+    def run(self, row, must=0):
         row_path = row['path']
         label = 1 if row['method'] == 'real' else 0
         

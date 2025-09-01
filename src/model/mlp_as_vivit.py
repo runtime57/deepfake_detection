@@ -8,7 +8,7 @@ from transformers import VivitModel
 from .AASIST import aasist_encoder
 
 
-class FeatsBaselineModel(nn.Module):
+class MlpAsVivitModel(nn.Module):
     """
     Simple MLP
     """
@@ -25,7 +25,7 @@ class FeatsBaselineModel(nn.Module):
         self.aasist = aasist_encoder()
 
         self.mlp = Sequential(
-            nn.Linear(in_features=av_channels+vivit_channels+as_channels, out_features=hidden_channels),
+            nn.Linear(in_features=vivit_channels+as_channels, out_features=hidden_channels),
             nn.ReLU(),
             nn.Linear(in_features=hidden_channels, out_features=hidden_channels // 2),
             nn.ReLU(),
@@ -43,9 +43,11 @@ class FeatsBaselineModel(nn.Module):
         """
         
         as_feats = self.aasist(aasist_audio)
-        as_pooled_feats = as_feats.mean(dim=1)
 
-        feats = torch.cat([av_feats, vivit_feats, as_pooled_feats], dim=1)
+        as_feats = as_feats.mean(dim=1)
+        vivit_feats = vivit_feats.mean(dim=1)
+
+        feats = torch.cat([vivit_feats, as_feats], dim=1)
 
         return {"logits": self.mlp(feats)}
 
@@ -63,10 +65,3 @@ class FeatsBaselineModel(nn.Module):
         result_info = result_info + f"\nTrainable parameters: {trainable_parameters}"
 
         return result_info
-
-    def _extract_feats(self, vivit_frames, av_video, av_audio, aasist_audio):
-        
-        with torch.inference_mode():
-            av_feats, _ = self.avhubert.extract_finetune(source={'video': av_video, 'audio': av_audio}, padding_mask=None, output_layer=None)
-            vivit_feats = self.vivit(pixel_values=vivit_frames).last_hidden_state[:, 0, :]
-        return as_feats, av_feats, vivit_feats

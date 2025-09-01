@@ -1,10 +1,14 @@
 import numpy as np
 import cv2
 import torch
+import torch.nn.functional as F
 import torchvision
 import safetensors
 import safetensors.torch
 import shutil
+import fairseq
+from argparse import Namespace
+from transformers import VivitModel
 from tqdm.auto import tqdm
 from scipy.io import wavfile
 from python_speech_features import logfbank
@@ -54,14 +58,18 @@ class FeatsFakeAVCelebsDataset(BaseDataset):
         index = []
         data_path = ROOT_PATH / "data" / "featsfakeavcelebs" / name
         elements = read_json(str(data_path / "split.json"))
-
         print("Instantiating models")
+
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
         ckpt_path = '/home/runtime57/hse/coursework_2/deepfake_detection/src/model/av_hubert/ckpt/base_vox_433h.pt'
         models, cfg, task = fairseq.checkpoint_utils.load_model_ensemble_and_task([ckpt_path])
         avhubert = models[0]
         if hasattr(models[0], 'decoder'):
             avhubert = models[0].encoder.w2v_model
+        avhubert.to(device)
         vivit = VivitModel.from_pretrained("google/vivit-b-16x2-kinetics400")
+        vivit.cuda()
 
         print("Creating FakeAVCelebs Dataset")
         processor = Processor()
@@ -72,9 +80,9 @@ class FeatsFakeAVCelebsDataset(BaseDataset):
             st_path = processor.run(row)
             label = 1 if row['method'] == 'real' else 0
             row_element = safetensors.torch.load_file(st_path)
-            av_feats, vivit_feats = self._extract_feats(avhubert, vivit, row_element['av_video'], row_element['av_audio'], row_element['vivit_frames'])
+            av_feats, vivit_feats = self._extract_feats(avhubert, vivit, row_element['av_frames'], row_element['av_audio'], row_element['vivit_frames'])
 
-            element = { 'av_feats': av_pooled_feats, 'vivit_feats': vivit_feats, 'aasist_audio': row_element['aasist_audio'] }
+            element = { 'av_feats': av_feats, 'vivit_feats': vivit_feats, 'aasist_audio': row_element['aasist_audio'] }
             element_path = data_path / f"{current_index:06}.safetensors"
             safetensors.torch.save_file(element, element_path)
             index.append({"path": str(element_path), "label": label})
@@ -113,27 +121,41 @@ class FeatsFakeAVCelebsDataset(BaseDataset):
         return instance_data
     
     def _extract_feats(self, avhubert, vivit, av_video, av_audio, vivit_frames):
-            def av_video_pad(self, x, max_len = 75):
-                x_len = x.shape[0]
-                if x_len >= max_len:
-                    return x[:max_len].clone()
-                # if too short
-                num_repeats = int(max_len / x_len) + 1
-                padded_x = x.repeat(num_repeats, 1, 1, 1)[:max_len]
-                return padded_x.clone()
+        def av_video_pad(x, max_len = 75):
+            x_len = x.shape[0]
+            if x_len >= max_len:
+                return x[:max_len].clone()
+            # if too short
+            num_repeats = int(max_len / x_len) + 1
+            padded_x = x.repeat(num_repeats, 1, 1, 1)[:max_len]
+            return padded_x.clone()
 
-            def av_audio_pad(self, x, max_len = 75):
-                x_len = x.shape[0]
-                if x_len >= max_len:
-                    return x[:max_len].clone()
-                # if too short
-                num_repeats = int(max_len / x_len) + 1
-                padded_x = x.repeat(num_repeats, 1)[:max_len]
-                return padded_x.clone()
+        def av_audio_pad(x, max_len = 75):
+            x_len = x.shape[0]
+            if x_len >= max_len:
+                return x[:max_len].clone()
+            # if too short
+            num_repeats = int(max_len / x_len) + 1
+            padded_x = x.repeat(num_repeats, 1)[:max_len]
+            return padded_x.clone()
 
+        def interpolate(x, factor=2):
+            x = x.permute(0, 2, 1)
+            x = F.interpolate(x, scale_factor=factor, mode='linear')
+            x = x.permute(0, 2, 1)
+            return x
+
+        cuda = torch.device("cuda")
+        cpu = torch.device("cpu")
         with torch.inference_mode():
-                av_feats, _ = avhubert.extract_finetune(source={'video': av_video_pad(av_video).unsqueeze(0), 'audio': av_audio_pad(av_audio).unsqueeze(0)}, padding_mask=None, output_layer=None)
-                vivit_feats = vivit(pixel_values=vivit_frames).last_hidden_state[:, 0, :]
-        av_pooled_feats = av_feats.mean(dim=1)
-        return av_pooled_feats, vivit_feats
+            video = av_video_pad(av_video).unsqueeze(0).permute((0, 4, 1, 2, 3)).contiguous().to(cuda)
+            audio = av_audio_pad(av_audio).unsqueeze(0).transpose(1, 2).to(cuda)
+            av_feats, _ = avhubert.extract_finetune(source={'video': video.float(), 'audio': audio.float()}, padding_mask=None, output_layer=None)
+            
+            vivit_feats = vivit(pixel_values=vivit_frames.float().to(cuda)).last_hidden_state[:, 1:, :]
+            vivit_feats = vivit_feats.view(1, 16, 14, 14, 768).mean(dim=(2, 3))
+            vivit_feats = vivit_feats.reshape(1, 16, 768)
+            vivit_feats = interpolate(vivit_feats)
+
+        return av_feats.to(cpu), vivit_feats.contiguous().to(cpu)
     
