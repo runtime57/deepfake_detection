@@ -1,13 +1,14 @@
 defaults:
-  - model: baseline
-  - metrics: example
-  - datasets: example_eval # we do not want to run inference on training data
-  - dataloader: example
+  - model: aasist_model
+  - writer: wandb_inf
+  - metrics: inference_full
+  - datasets: fakeavcelebs_full 
+  - dataloader: dataloader
   - transforms: example
   - _self_
 inferencer:
-  device_tensors: ["data_object", "labels"] # which tensors should be on device (ex. GPU)
+  device_tensors: ["vivit_feats", "av_feats", "aasist_audio", "labels"] # which tensors should be on device (ex. GPU)
   device: auto # device name or "auto"
-  save_path: "example" # any name here, can be a dataset name
+  save_path: "inference/fakeavcelebs" # any name here, can be a dataset name
   seed: 1
-  from_pretrained: "saved/model_best.pth" # path to the pretrained model
+  from_pretrained: "saved/aasist_full/model_best.pth" # path to the pretrained model

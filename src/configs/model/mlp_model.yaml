@@ -1,6 +1,5 @@
-_target_: src.model.MlpAsVivitModel
+_target_: src.model.MlpFullModel
 av_channels: 768
 vivit_channels: 768
 as_channels: 64
 hidden_channels: 512
-dropout: 0.2

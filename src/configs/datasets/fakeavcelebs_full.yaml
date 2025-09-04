@@ -2,21 +2,25 @@ test_faceswap:
   _target_: src.datasets.FakeAVCelebsDataset
   name: "test-faceswap"
   instance_transforms: ${transforms.instance_transforms.inference}
-test_faceswap_wav2lip:
-  _target_: src.datasets.FakeAVCelebsDataset
-  name: "test-faceswap-wav2lip"
   instance_transforms: ${transforms.instance_transforms.inference}
 test_fsgan:
   _target_: src.datasets.FakeAVCelebsDataset
   name: "test-fsgan"
   instance_transforms: ${transforms.instance_transforms.inference}
-test_fsgan_Wav2lip:
+test_wav2lip:
   _target_: src.datasets.FakeAVCelebsDataset
-  name: "test-fsgan-wav2lip"
+  name: "test-wav2lip"
   instance_transforms: ${transforms.instance_transforms.inference}
 test_rtvc:
   _target_: src.datasets.FakeAVCelebsDataset
   name: "test-rtvc"
+  instance_transforms: ${transforms.instance_transforms.inference}
+test_faceswap_wav2lip:
+  _target_: src.datasets.FakeAVCelebsDataset
+  name: "test-faceswap-wav2lip"
+test_fsgan_wav2lip:
+  _target_: src.datasets.FakeAVCelebsDataset
+  name: "test-wav2lip"
   instance_transforms: ${transforms.instance_transforms.inference}
 test_set_1:
   _target_: src.datasets.FakeAVCelebsDataset
@@ -25,8 +29,4 @@ test_set_1:
 test_set_2:
   _target_: src.datasets.FakeAVCelebsDataset
   name: "test-set-2"
-  instance_transforms: ${transforms.instance_transforms.inference}
-test_wav2lip:
-  _target_: src.datasets.FakeAVCelebsDataset
-  name: "test-wav2lip"
   instance_transforms: ${transforms.instance_transforms.inference}

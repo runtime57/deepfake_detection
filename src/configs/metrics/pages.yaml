@@ -2,20 +2,16 @@ device: "auto"
 train: # metrics that are calculated during training
   - _target_: src.metrics.AccuracyMetric
     device: ${metrics.device}
-    name: "TRAIN_Accuracy"
-  - _target_: src.metrics.PrecisionMetric
+    name: "Accuracy"
+  - _target_: src.metrics.F1ScoreMetric
     device: ${metrics.device}
-    name: "TRAIN_Precision"
-  - _target_: src.metrics.RecallMetric
+    name: "R_F1"
+    label_class: 1
+  - _target_: src.metrics.F1ScoreMetric
     device: ${metrics.device}
-    name: "TRAIN_Recall"
+    name: "F_F1"
+    label_class: 0
 inference: # metrics that are calculated during inference (eval)
   - _target_: src.metrics.AccuracyMetric
     device: ${metrics.device}
     name: "Accuracy"
-  - _target_: src.metrics.PrecisionMetric
-    device: ${metrics.device}
-    name: "Precision"
-  - _target_: src.metrics.RecallMetric
-    device: ${metrics.device}
-    name: "Recall"

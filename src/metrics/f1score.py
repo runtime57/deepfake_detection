@@ -3,7 +3,7 @@ import torch
 from src.metrics.base_metric import BaseMetric
 
 
-class RecallMetric(BaseMetric):
+class F1ScoreMetric(BaseMetric):
     def __init__(self, label_class, *args, **kwargs):
         """
         Example of a nested metric class. Applies metric function
@@ -34,5 +34,4 @@ class RecallMetric(BaseMetric):
         dlabels = labels.to(logits.device)
         true_positive = ((dclasses == dlabels) * (dlabels == self.label_class)).sum(dtype=torch.float32)
         false_negative = ((dclasses != dlabels) * (dlabels == self.label_class)).sum(dtype=torch.float32)
-        false_positive = ((dclasses != dlabels) * (dlabels != self.label_class)).sum(dtype=torch.float32)
-        return 2 * true_positive.item(), (2 * true_positive + false_negative + false_positive).item()
+        return true_positive.item(), (true_positive + false_negative).item()

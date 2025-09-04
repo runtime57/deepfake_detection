@@ -4,7 +4,7 @@ from src.metrics.base_metric import BaseMetric
 
 
 class PrecisionMetric(BaseMetric):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, label_class, *args, **kwargs):
         """
         Example of a nested metric class. Applies metric function
         object (for example, from TorchMetrics) on tensors.
@@ -13,11 +13,11 @@ class PrecisionMetric(BaseMetric):
         inside the '__call__' method.
 
         Args:
-            metric (Callable): function to calculate metrics.
-            device (str): device for the metric calculation (and tensors).
+            label_class (Bool): for which class to count metric
         """
         super().__init__(*args, **kwargs)
         self.is_global = True
+        self.label_class = label_class
 
     def __call__(self, logits: torch.Tensor, labels: torch.Tensor, **kwargs):
         """
@@ -31,7 +31,7 @@ class PrecisionMetric(BaseMetric):
         """
         dclasses = logits.argmax(dim=-1)
         dlabels = labels.to(logits.device)
-        true_positive = ((dclasses == dlabels) * dlabels).sum(dtype=torch.float32)
-        false_positive = ((dclasses != dlabels) * (1 - dlabels)).sum(dtype=torch.float32)
+        true_positive = ((dclasses == dlabels) * (dlabels == self.label_class)).sum(dtype=torch.float32)
+        false_positive = ((dclasses != dlabels) * (dlabels != self.label_class)).sum(dtype=torch.float32)
         return true_positive.item(), (true_positive + false_positive).item()
     

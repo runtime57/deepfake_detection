@@ -12,7 +12,7 @@ from src.utils.io_utils import ROOT_PATH
 warnings.filterwarnings("ignore", category=UserWarning)
 
 
-@hydra.main(version_base=None, config_path="src/configs", config_name="inference")
+@hydra.main(config_path="src/configs", config_name="inference")
 def main(config):
     """
     Main script for inference. Instantiates the model, metrics, and

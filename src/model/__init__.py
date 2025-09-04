@@ -9,6 +9,8 @@ from src.model.mlp_av_vivit import MlpAvVivitModel
 from src.model.mlp_as_vivit import MlpAsVivitModel
 
 from src.model.mstcn_full import MstcnFullModel
+from src.model.mstcn_av_as import MstcnAvAsModel
+from src.model.mstcn_as_vivit import MstcnAsViViTModel
 
 __all__ = [
     "AasistFullModel",
@@ -19,6 +21,8 @@ __all__ = [
     "MlpAvAsModel",
     "MlpAvVivitModel"
     "MlpAsVivitModel",
-    "MstcnFullModel"
+    "MstcnFullModel",
+    "MstcnAvAsModel",
+    "MstcnAsViViTModel"
 ]
 

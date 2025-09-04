@@ -91,7 +91,7 @@ class MSTCN(nn.Module):
     """
     Multi-Scale TCN classifier head
     """
-    def __init__(self, input_size, num_channels=[512, 256, 128, 64], num_classes=2):
+    def __init__(self, input_size, num_channels=[256, 256, 256, 256], num_classes=2):
         super(MSTCN, self).__init__()
 
         self.ksize = 3

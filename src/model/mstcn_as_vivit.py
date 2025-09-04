@@ -8,7 +8,7 @@ from transformers import VivitModel
 from .AASIST import aasist_encoder
 from .MSTCN import MSTCN
 
-class MstcnFullModel(nn.Module):
+class MstcnAsViViTModel(nn.Module):
     """
     MSTCN classifier
     """
@@ -25,9 +25,8 @@ class MstcnFullModel(nn.Module):
         self.aasist = aasist_encoder()
 
         self.pool_as = nn.Linear(in_features=as_time, out_features=hidden_time)
-        self.pool_av = nn.Linear(in_features=av_time, out_features=hidden_time)
         self.pool_vivit = nn.Linear(in_features=vivit_time, out_features=hidden_time)
-        self.ms_tcn = MSTCN(input_size=av_channels+vivit_channels+as_channels)
+        self.ms_tcn = MSTCN(input_size=vivit_channels+as_channels)
 
     def forward(self, vivit_feats, av_feats, aasist_audio, **batch):
         """
@@ -41,10 +40,9 @@ class MstcnFullModel(nn.Module):
         as_feats = self.aasist(aasist_audio)
 
         as_feats = self.pool_as(as_feats.transpose(1, 2))
-        av_feats = self.pool_av(av_feats.transpose(1, 2))
         vivit_feats = self.pool_vivit(vivit_feats.transpose(1, 2))
 
-        feats = torch.cat([as_feats, av_feats, vivit_feats], dim=1)
+        feats = torch.cat([as_feats, vivit_feats], dim=1)
 
         return {"logits": self.ms_tcn(feats)}
 

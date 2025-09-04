@@ -1,0 +1,29 @@
+device: "auto"
+inference: # metrics that are calculated during inference (eval)
+  - _target_: src.metrics.AccuracyMetric
+    device: ${metrics.device}
+    name: "Accuracy"
+  - _target_: src.metrics.PrecisionMetric
+    device: ${metrics.device}
+    name: "R_Precision"
+    label_class: 1
+  - _target_: src.metrics.RecallMetric
+    device: ${metrics.device}
+    name: "R_Recall"
+    label_class: 1
+  - _target_: src.metrics.F1ScoreMetric
+    device: ${metrics.device}
+    name: "R_F1"
+    label_class: 1
+  - _target_: src.metrics.PrecisionMetric
+    device: ${metrics.device}
+    name: "F_Precision"
+    label_class: 0
+  - _target_: src.metrics.RecallMetric
+    device: ${metrics.device}
+    name: "F_Recall"
+    label_class: 0
+  - _target_: src.metrics.F1ScoreMetric
+    device: ${metrics.device}
+    name: "F_F1"
+    label_class: 0

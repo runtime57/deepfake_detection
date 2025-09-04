@@ -1,4 +1,4 @@
-_target_: src.model.MstcnFullModel
+_target_: src.model.MstcnAsViViTModel
 av_channels: 768
 vivit_channels: 768
 as_channels: 64
@@ -6,4 +6,3 @@ av_time: 75
 vivit_time: 32
 as_time: 29
 hidden_time: 25
-
