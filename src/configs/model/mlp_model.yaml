@@ -1,4 +1,4 @@
-_target_: src.model.MlpFullModel
+_target_: src.model.MlpAvVivitModel
 av_channels: 768
 vivit_channels: 768
 as_channels: 64

@@ -1,7 +1,7 @@
 defaults:
-  - model: aasist_model
+  - model: mlp_model
   - writer: wandb_inf
-  - metrics: inference_full
+  - metrics: inference
   - datasets: fakeavcelebs_full 
   - dataloader: dataloader
   - transforms: example
@@ -11,4 +11,4 @@ inferencer:
   device: auto # device name or "auto"
   save_path: "inference/fakeavcelebs" # any name here, can be a dataset name
   seed: 1
-  from_pretrained: "saved/aasist_full/model_best.pth" # path to the pretrained model
+  from_pretrained: "/home/runtime57/hse/coursework_2/deepfake_detection/saved/mlp_av_vivit/model_best.pth" # path to the pretrained model

@@ -122,9 +122,17 @@ class Inferencer(BaseTrainer):
         outputs = self.model(**batch)
         batch.update(outputs)
 
+        # if metrics is not None:
+        #     for met in self.metrics["inference"]:
+        #         metrics.update(met.name, met(**batch))
+
         if metrics is not None:
             for met in self.metrics["inference"]:
-                metrics.update(met.name, met(**batch))
+                if met.is_global:
+                    num, denum = met(**batch)
+                    metrics.update_global(met.name, num, denum)
+                else:
+                    metrics.update(met.name, met(**batch))
 
         # Some saving logic. This is an example
         # Use if you need to save predictions on disk
