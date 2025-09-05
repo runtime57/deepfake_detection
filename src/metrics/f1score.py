@@ -27,11 +27,12 @@ class F1ScoreMetric(BaseMetric):
         Args:
             logits (Tensor): model output predictions.
             labels (Tensor): ground-truth labels.
-        Returns:
+        Returns:    
             metric (float): calculated metric.
         """
         dclasses = logits.argmax(dim=-1)
         dlabels = labels.to(logits.device)
         true_positive = ((dclasses == dlabels) * (dlabels == self.label_class)).sum(dtype=torch.float32)
         false_negative = ((dclasses != dlabels) * (dlabels == self.label_class)).sum(dtype=torch.float32)
-        return true_positive.item(), (true_positive + false_negative).item()
+        false_positive = ((dclasses != dlabels) * (dlabels != self.label_class)).sum(dtype=torch.float32)
+        return 2 * true_positive.item(), (2 * true_positive + false_negative + false_positive).item()
