@@ -7,6 +7,8 @@ from argparse import Namespace
 from transformers import VivitModel
 from .AASIST import aasist_encoder
 from .MSTCN import MSTCN
+import torch.nn.functional as F
+
 
 class MstcnFullModel(nn.Module):
     """
@@ -23,7 +25,6 @@ class MstcnFullModel(nn.Module):
         super().__init__()
 
         self.aasist = aasist_encoder()
-
         self.pool_as = nn.Linear(in_features=as_time, out_features=hidden_time)
         self.pool_av = nn.Linear(in_features=av_time, out_features=hidden_time)
         self.pool_vivit = nn.Linear(in_features=vivit_time, out_features=hidden_time)

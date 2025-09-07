@@ -10,19 +10,23 @@ from src.model.mlp_as_vivit import MlpAsVivitModel
 
 from src.model.mstcn_full import MstcnFullModel
 from src.model.mstcn_av_as import MstcnAvAsModel
-from src.model.mstcn_as_vivit import MstcnAsViViTModel
+from src.model.mstcn_av_vivit import MstcnAvVivitModel
+from src.model.mstcn_as_vivit import MstcnAsVivitModel
 
 __all__ = [
     "AasistFullModel",
     "AasistAvAsModel",
     "AasistAvVivitModel",
     "AasistAsVivitModel",
+
     "MlpFullModel",
     "MlpAvAsModel",
     "MlpAvVivitModel"
     "MlpAsVivitModel",
+
     "MstcnFullModel",
     "MstcnAvAsModel",
+    "MstcnAvViViTModel",
     "MstcnAsViViTModel"
 ]
 
