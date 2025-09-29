@@ -1,4 +1,4 @@
-# Multimodal system for audio-visual deepfake detection
+# Multimodal System for Audio-Visual Deepfake Detection
 
 We combine AV-HuBERT, ViViT and AASIST encoder to extract audio-visual features, which are then processed by a graph-based classifier to achieve higher results in audio-visual deepfake detection. See the [paper](https://github.com/runtime57/deepfake_detection/blob/main/paper/Multimodal%20System%20for%20Audio-Visual%20Deepfake%20Detection.pdf) for details.
 
