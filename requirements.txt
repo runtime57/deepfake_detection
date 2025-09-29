@@ -1,14 +1,23 @@
-torch==1.13.1
-torchvision==0.14.1
+torch==2.2.0
 torchmetrics==0.11.4
-numpy==1.24.4
+torchvision==0.17.0
+safetensors==0.5.3
+hydra-core==1.1.0
+numpy==1.19.5
 dlib==19.24.2
 tqdm
 matplotlib
 pandas
 wandb
 comet_ml
-hydra-core
+fairseq==1.0.0a0+afc77bd
+huggingface-hub==0.34.4
+scikit-image==0.18.3 
+scikit-learn==0.24.2 
+scikit-video==1.1.11
+omegaconf==2.1.2
+scipy==1.10.0 
+sympy==1.13.3
 
 black
 isort
