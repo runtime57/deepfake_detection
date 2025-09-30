@@ -34,8 +34,21 @@ We combine AV-HuBERT, ViViT and AASIST encoder to extract audio-visual features,
     pre-commit install
     ```
 
-## Results
+## Train and inference
+ 
 
+To train a new model, use the following command:
+```
+python3 train.py -cn=CONFIG_NAME HYDRA_CONFIG_ARGUMENTS
+```
+Where `CONFIG_NAME` is a config from `src/configs/model` and `HYDRA_CONFIG_ARGUMENTS` are optional arguments
+
+To run inference (evaluate the model or save predictions):
+```
+python3 inference.py -cn=CONFIG_NAME
+```
+
+## Results
 
 | Method               | Class | Prec | Rec  | F1   | Acc  | Visual changes | Audio changes |
 |----------------------|-------|------|------|------|------|----------------|----------------|
@@ -59,17 +72,9 @@ We combine AV-HuBERT, ViViT and AASIST encoder to extract audio-visual features,
 
 Due to limited computational resources, we did not fine-tune AV-HuBERT and ViViT, which negatively affects the overall performance of the system. Nevertheless, our approach still achieves results that are close to the state of the art on multiple test sets.
 
-## Train and inference
- 
 
-To train a new model, use the following command:
-```
-python3 train.py -cn=CONFIG_NAME HYDRA_CONFIG_ARGUMENTS
-```
-Where `CONFIG_NAME` is a config from `src/configs/model` and `HYDRA_CONFIG_ARGUMENTS` are optional arguments
+## Future work
 
-To run inference (evaluate the model or save predictions):
-```
-python3 inference.py -cn=CONFIG_NAME
-```
-
+- Fine-tune pre-trained encoders to improve the performance
+- Complete the cross-dataset evaluation
+- Enhance results on visual-only manipulation scenarios
