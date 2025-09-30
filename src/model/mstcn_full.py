@@ -12,7 +12,7 @@ import torch.nn.functional as F
 
 class MstcnFullModel(nn.Module):
     """
-    MSTCN classifier
+    Model using all (AV-HuBert, ViViT and AASIST features) and MSTCN classifier
     """
 
     def __init__(self, av_channels, vivit_channels, as_channels, av_time, vivit_time, as_time, hidden_time):

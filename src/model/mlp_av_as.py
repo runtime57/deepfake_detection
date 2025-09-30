@@ -10,7 +10,7 @@ from .AASIST import aasist_encoder
 
 class MlpAvAsModel(nn.Module):
     """
-    Simple MLP
+    Model using all AV-HuBert and AASIST features and simple MLP classifier
     """
 
     def __init__(self, av_channels, vivit_channels, as_channels, hidden_channels):

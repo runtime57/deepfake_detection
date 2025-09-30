@@ -10,7 +10,7 @@ from .AMSDF import HGFM, GRS
 
 class  AasistAvVivitModel(nn.Module):
     """
-    Model using all (AV-HuBert, ViViT and AASIST features) and HGFM classifier
+    Model using all AV-HuBert and ViViT features and HGFM classifier
     """
 
     def __init__(self, av_channels, vivit_channels, as_channels, hidden_channels):

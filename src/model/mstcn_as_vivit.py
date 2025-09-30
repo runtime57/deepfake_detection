@@ -10,7 +10,7 @@ from .MSTCN import MSTCN
 
 class MstcnAsVivitModel(nn.Module):
     """
-    MSTCN classifier
+    Model using all ViViT and AASIST features and MSTCN classifier
     """
 
     def __init__(self, av_channels, vivit_channels, as_channels, av_time, vivit_time, as_time, hidden_time):
