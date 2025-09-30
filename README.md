@@ -33,6 +33,11 @@ We combine AV-HuBERT, ViViT and AASIST encoder to extract audio-visual features,
     ```
     pre-commit install
     ```
+## Experimental setup
+
+For both training and evaluation, we used the [FakeAVCeleb](https://sites.google.com/view/fakeavcelebdash-lab/) dataset, which has already become a standard benchmark in the sphere of audio-visual deepfake detection. Train and test splits will be created automatically, but the dataset should be saved in a new directory `data/FakeAVCeleb`. This is crucial for our code structure. All preprocessing is done during dataset creation stage, see the `src/datasets/preprocess.py` for details.
+
+Configurations for all types of used baselines are listed in `src/configs/model`. Feel free to conduct your own experiments, changing used model in `src/configs`.
 
 ## Train and inference
  
@@ -41,11 +46,11 @@ To train a new model, use the following command:
 ```
 python3 train.py -cn=CONFIG_NAME HYDRA_CONFIG_ARGUMENTS
 ```
-Where `CONFIG_NAME` is a config from `src/configs/model` and `HYDRA_CONFIG_ARGUMENTS` are optional arguments
+Where `CONFIG_NAME` is a config from `src/configs` and `HYDRA_CONFIG_ARGUMENTS` are optional arguments
 
 To run inference (evaluate the model or save predictions):
 ```
-python3 inference.py -cn=CONFIG_NAME
+python3 inference.py -cn=CONFIG_NAME HYDRA_CONFIG_ARGUMENTS
 ```
 
 ## Results
@@ -70,11 +75,11 @@ python3 inference.py -cn=CONFIG_NAME
 |                      | Fake  | 0.96 | 0.80 | 0.87 |      |                |                |
 
 
-Due to limited computational resources, we did not fine-tune AV-HuBERT and ViViT, which negatively affects the overall performance of the system. Nevertheless, our approach still achieves results that are close to the state of the art on multiple test sets.
+Due to limited computational resources, we **did not fine-tune** AV-HuBERT and ViViT, which negatively affects the overall performance of the system. Nevertheless, our approach still achieves results that are **close to the state-of-the-art** on multiple test sets.
 
 
 ## Future work
 
-- Fine-tune pre-trained encoders to improve the performance
-- Complete the cross-dataset evaluation
-- Enhance results on visual-only manipulation scenarios
+- Fine-tune pre-trained encoders to improve the overall system performance
+- Complete the cross-dataset evaluation to get more information about the accuracy of our approach
+- Modify visual features extraction process to enhance results on visual-only manipulation cases

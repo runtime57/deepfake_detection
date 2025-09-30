@@ -1,5 +1,5 @@
 defaults:
-  - model: aasist_model
+  - model: amsdf_lav
   - writer: wandb_inf
   - metrics: inference_full
   - datasets: fakeavcelebs_full
