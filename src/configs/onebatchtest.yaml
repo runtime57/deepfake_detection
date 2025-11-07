@@ -16,9 +16,11 @@ lr_scheduler:
 loss_function:
   _target_: src.loss.CrossEntropyLoss
 trainer:
+  lr: 3e-4
+  lr_finetune: 1e-5
   log_step: 50
   n_epochs: 30
-  epoch_len: 10
+  epoch_len: 16
   device_tensors: ["av_audio", "av_video", "vivit_frames", "aasist_audio", "labels"] # which tensors should be on device (ex. GPU)
   resume_from: null # null or path to the checkpoint dir with *.pth and config.yaml
   device: auto # device name or "auto"

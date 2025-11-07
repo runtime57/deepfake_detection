@@ -65,7 +65,7 @@ class FakeAVCelebsDataset(BaseDataset):
         failed = 0
         for i, row in tqdm(enumerate(elements), total=len(elements)):
             # create dataset
-            st_path = processor.create_element(row)
+            st_path = processor.create_element(row, must=1)
             label = 1 if row['method'] == 'real' else 0
             element = safetensors.torch.load_file(st_path)
             element_path = data_path / f"{current_index:06}.safetensors"

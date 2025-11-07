@@ -8,6 +8,7 @@ import torch.nn.functional as F
 from transformers import VivitModel
 from .AASIST import *
 from .AMSDF import HGFM, GRS
+from src.utils.io_utils import ROOT_PATH
 
 class  AasistFullModel(nn.Module):
     """
