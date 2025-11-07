@@ -2,7 +2,7 @@ defaults:
   - model: amsdf_lav
   - writer: wandb
   - metrics: pages
-  - datasets: fakeavcelebs  
+  - datasets: fakeavcelebs
   - dataloader: dataloader
   - transforms: example
   - _self_
@@ -18,8 +18,8 @@ loss_function:
 trainer:
   log_step: 100
   n_epochs: 30
-  epoch_len: 2545 
-  device_tensors: ["vivit_feats", "av_feats", "aasist_audio", "labels"] # which tensors should be on device (ex. GPU)
+  epoch_len: 2545
+  device_tensors: ["av_audio", "av_video", "vivit_frames", "aasist_audio", "labels"] # which tensors should be on device (ex. GPU)
   resume_from: null # null or path to the checkpoint dir with *.pth and config.yaml
   device: auto # device name or "auto"
   override: True # if True, will override the previous run with the same name

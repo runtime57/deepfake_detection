@@ -4,6 +4,7 @@ from torch.nn import Sequential
 import torchvision
 import fairseq
 from argparse import Namespace
+import torch.nn.functional as F
 from transformers import VivitModel
 from .AASIST import *
 from .AMSDF import HGFM, GRS
@@ -21,8 +22,11 @@ class  AasistFullModel(nn.Module):
             fc_hidden (int): number of hidden features.
         """
         super().__init__()
-
-        self.aasist = aasist_encoder()
+        ckpt_path         = str(ROOT_PATH / 'src/model/av_hubert/ckpt/base_vox_433h.pt')
+        models, cfg, task = fairseq.checkpoint_utils.load_model_ensemble_and_task([ckpt_path])
+        self.avhubert     = models[0].encoder.w2v_model if hasattr(models[0], 'decoder') else models[0]
+        self.vivit        = VivitModel.from_pretrained("google/vivit-b-16x2-kinetics400")
+        self.aasist       = aasist_encoder()
         """IGAM"""
         self.GAT_avhubert  = GraphAttentionLayer(av_channels, 64, temperature=2.0)
         self.pool_avhubert = GraphPool(25/75, 64, 0.3)
@@ -31,20 +35,20 @@ class  AasistFullModel(nn.Module):
         self.GAT_aasist    = GraphAttentionLayer(as_channels, 64, temperature=2.0)
         self.pool_aasist   = GraphPool(25/29, 64, 0.3)
         """HGFM"""
-        self.Core_HV = HGFM()
-        self.Core_HA = HGFM()
-        self.Core_VA = HGFM()
+        self.Core_HV  = HGFM()
+        self.Core_HA  = HGFM()
+        self.Core_VA  = HGFM()
         self.Core_HVA = HGFM()
         """GRS"""
-        self.GRS_group1=GRS()
-        self.GRS_group2=GRS()
-        self.GRS_group3=GRS()
-        self.drop = nn.Dropout(0.5, inplace=True)
-        self.out_layer = nn.Linear(384, 64)
+        self.GRS_group1 = GRS()
+        self.GRS_group2 = GRS()
+        self.GRS_group3 = GRS()
+        self.drop       = nn.Dropout(0.5, inplace=True)
+        self.out_layer  = nn.Linear(384, 64)
         self.out_layer2 = nn.Linear(64, 2)
-        
 
-    def forward(self, vivit_feats, av_feats, aasist_audio, **batch):
+
+    def forward(self, vivit_frames, av_video, av_audio, aasist_audio, **batch):
         """
         Model forward method.
 
@@ -53,22 +57,36 @@ class  AasistFullModel(nn.Module):
         Returns:
             output (dict): output dict containing logits.
         """
+        def interpolate(x, factor=2):
+            x = x.permute(0, 2, 1)
+            x = F.interpolate(x, scale_factor=factor, mode='linear')
+            x = x.permute(0, 2, 1)
+            return x
+
+        av_feats, _ = self.avhubert.extract_finetune(source={'video': av_video.float(),
+                                                        'audio': av_audio.float()},
+                                                    padding_mask=None,
+                                                    output_layer=None)
+        vivit_feats = self.vivit(pixel_values=vivit_frames).last_hidden_state[:, 1:, :]
+        vivit_feats = vivit_feats.view(1, 16, 14, 14, 768).mean(dim=(2, 3))
+        vivit_feats = vivit_feats.reshape(1, 16, 768)
+        vivit_feats = interpolate(vivit_feats)
         as_feats = self.aasist(aasist_audio)
+
         """ IGAM """
         as_gat = self.GAT_aasist(as_feats)
         av_gat = self.GAT_avhubert(av_feats)
         vivit_gat = self.GAT_vivit(vivit_feats) 
-        # print(as_gat.shape, av_gat.shape, vivit_gat.shape)
         as_gat = self.pool_aasist(as_gat) 
         av_gat = self.pool_avhubert(av_gat) 
         vivit_gat = self.pool_vivit(vivit_gat)
-        # print(as_gat.shape, av_gat.shape, vivit_gat.shape)
 
         """ Heterogeneous graph fusion module"""
         HV_HG, HV_SN,attmap_HV = self.Core_HV(av_gat, vivit_gat)
         HA_HG, HA_SN,attmap_HA = self.Core_HA(av_gat, as_gat)
         VA_HG, VA_SN,attmap_VA = self.Core_VA(vivit_gat, as_gat)
         HVA_HG, HVA_SN,attmap_HVA = self.Core_HVA(HV_HG, VA_HG)
+
         """Group-based Readout Scheme"""
         GAT_Group=[av_gat,as_gat,vivit_gat]
         HGAT_Group=[HV_HG,HA_HG,VA_HG,HVA_HG]
@@ -76,6 +94,7 @@ class  AasistFullModel(nn.Module):
         out1=self.GRS_group1(GAT_Group)
         out2=self.GRS_group2(HGAT_Group)
         out3=self.GRS_group3(SN_Group)
+
         """output"""
         last_hidden = torch.cat([out1,out2,out3], dim=1)
         last_hidden = self.drop(last_hidden)

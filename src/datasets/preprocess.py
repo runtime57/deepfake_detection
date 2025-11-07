@@ -182,13 +182,40 @@ def aasist_load(audio_fn, max_len: int = 64600):
     if x_len >= max_len:
         stt = np.random.randint(x_len - max_len)
         return x[stt:stt + max_len]
-    return x   
+    return x
+
+def aasist_pad(x, max_len: int = 64600):
+    x_len = x.shape[0]
+    if x_len == max_len:
+        return x
+    # if too short
+    num_repeats = int(max_len / x_len) + 1
+    padded_x = x.repeat(num_repeats)[:max_len]
+    return padded_x.clone()
 
 def av_crop(x, max_len = 75):
     x_len = x.shape[0]
     if x_len >= max_len:
         return x[:max_len].clone()
     return x
+
+def av_video_pad(x, max_len = 75):
+    x_len = x.shape[0]
+    if x_len >= max_len:
+        return x[:max_len].clone()
+    # if too short
+    num_repeats = int(max_len / x_len) + 1
+    padded_x = x.repeat(num_repeats, 1, 1, 1)[:max_len]
+    return padded_x.clone()
+
+def av_audio_pad(x, max_len = 75):
+    x_len = x.shape[0]
+    if x_len >= max_len:
+        return x[:max_len].clone()
+    # if too short
+    num_repeats = int(max_len / x_len) + 1
+    padded_x = x.repeat(num_repeats, 1)[:max_len]
+    return padded_x.clone()
 
 class Processor:
     def __init__(self, name="train"):
@@ -205,7 +232,7 @@ class Processor:
         self.avp = AV_Processor()
         self.vvtp = ViViT_Processor()
 
-    def run(self, row, must=0):
+    def create_element(self, row, must=1):
         row_path = row['path']
         label = 1 if row['method'] == 'real' else 0
         
@@ -214,13 +241,20 @@ class Processor:
             return st_path
         video_fn, audio_fn = self.avp.av_preprocess(row_path, must)
         av_frames, av_audio = self.hubert_load_feature(video_fn, audio_fn)
+        # frames processing
+        av_frames = av_crop(torch.from_numpy(av_frames)).to(torch.uint8)
+        av_frames = av_video_pad(av_frames).unsqueeze(0).permute((0, 4, 1, 2, 3)).contiguous()
+        # audio processing
+        av_audio = av_crop(torch.from_numpy(av_audio))
+        av_audio = av_audio_pad(av_audio).unsqueeze(0).transpose(1, 2).contiguous()
+        # vivit and aasist processing
         vivit_frames = self.vvtp.vivit_preprocess(row_path, must)
         aasist_audio = aasist_load(audio_fn)
         element = {
-            "av_audio": av_crop(torch.from_numpy(av_audio)),
-            "av_frames": av_crop(torch.from_numpy(av_frames)).to(torch.uint8), 
-            "vivit_frames": vivit_frames.clone().to(torch.uint8), 
-            "aasist_audio": torch.from_numpy(aasist_audio).clone()
+            "av_audio": av_audio,
+            "av_frames": av_frames,
+            "vivit_frames": vivit_frames.clone().to(torch.uint8),
+            "aasist_audio": aasist_pad(torch.from_numpy(aasist_audio).clone()).float().unsqueeze(0).contiguous()
         }
         safetensors.torch.save_file(element, st_path)
         os.remove(video_fn)

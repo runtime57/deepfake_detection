@@ -1,10 +1,14 @@
 import numpy as np
 import cv2
 import torch
+import torch.nn.functional as F
 import torchvision
 import safetensors
 import safetensors.torch
 import shutil
+import fairseq
+from argparse import Namespace
+from transformers import VivitModel
 from tqdm.auto import tqdm
 from scipy.io import wavfile
 from python_speech_features import logfbank
@@ -19,10 +23,9 @@ class FakeAVCelebsDataset(BaseDataset):
         path (str):  path to elemnt
         label (int): fake or real
 
-    and each element contains (cropped, but no padded):
-        av_audio (torch.Tensor):     preprocessed audio for AV-Hubert (3 seconds / 75 frames)
-        av_frames (torch.Tensor):    preprocessed frames for AV-Hubert (3 seconds / 75 frames)
-        vivit_frames (torch.Tensor): preprocessed frames for ViViT (32 frames)
+    and each element contains:
+        av_feats (torch.Tensor):     extracted AV-Hubert features
+        vivit_feats (torch.Tensor):  extracted ViViT features
         aasist_audio (torch.Tensor): extracted audio for AASIST (4 seconds / 64600 ticks)
     """
 
@@ -57,24 +60,19 @@ class FakeAVCelebsDataset(BaseDataset):
         elements = read_json(str(data_path / "split.json"))
 
         print("Creating FakeAVCelebs Dataset")
-        
         processor = Processor()
         current_index = 0
         failed = 0
-        regen = 0
         for i, row in tqdm(enumerate(elements), total=len(elements)):
             # create dataset
-            st_path = processor.run(row)
+            st_path = processor.create_element(row)
             label = 1 if row['method'] == 'real' else 0
-            if st_path is None:
-                failed += 1
-                print(f"Failed: {row['path']}")
-                continue
             element = safetensors.torch.load_file(st_path)
             element_path = data_path / f"{current_index:06}.safetensors"
-            current_index += 1
             safetensors.torch.save_file(element, element_path)
             index.append({"path": str(element_path), "label": label})
+            current_index += 1
+
         print(f"Total number: {len(elements)}")
         print(f"Processed: {current_index}")
         print(f"Failed: {failed}")
@@ -99,13 +97,24 @@ class FakeAVCelebsDataset(BaseDataset):
         data_dict = self._index[ind]
         data_path = data_dict["path"]
         obj = self.load_object(data_path)
-        av_audio = obj["av_audio"]
-        av_frames = obj["av_frames"]
-        vivit_frames = obj["vivit_frames"]
-        aasist_audio = obj["aasist_audio"]
-        label = data_dict["label"]
-
-        instance_data = {"av_audio": av_audio, "av_frames": av_frames, "vivit_frames": vivit_frames, "aasist_audio": aasist_audio, "labels": label}
+        
+        instance_data = {"labels": data_dict["label"]}
+        for key in obj:
+            instance_data[key] = obj[key]
         instance_data = self.preprocess_data(instance_data)
 
         return instance_data
+    
+    def _extract_feats(self, avhubert, vivit, av_video, av_audio, vivit_frames):
+        cuda = torch.device("cuda")
+        cpu = torch.device("cpu")
+        with torch.inference_mode():
+            av_feats, _ = avhubert.extract_finetune(source={'video': video.float(), 'audio': audio.float()},
+                                                    padding_mask=None, output_layer=None)
+            vivit_feats = vivit(pixel_values=vivit_frames.float().to(cuda)).last_hidden_state[:, 1:, :]
+            vivit_feats = vivit_feats.view(1, 16, 14, 14, 768).mean(dim=(2, 3))
+            vivit_feats = vivit_feats.reshape(1, 16, 768)
+            vivit_feats = interpolate(vivit_feats)
+
+        return av_feats.to(cpu), vivit_feats.contiguous().to(cpu)
+    

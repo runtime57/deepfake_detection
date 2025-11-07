@@ -62,7 +62,7 @@ class FeatsFakeAVCelebsDataset(BaseDataset):
 
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        ckpt_path = '/home/runtime57/hse/coursework_2/deepfake_detection/src/model/av_hubert/ckpt/base_vox_433h.pt'
+        ckpt_path = str(ROOT_PATH / 'src' / 'model' / 'av_hubert' / 'ckpt' / 'base_vox_433h.pt')
         models, cfg, task = fairseq.checkpoint_utils.load_model_ensemble_and_task([ckpt_path])
         avhubert = models[0]
         if hasattr(models[0], 'decoder'):
