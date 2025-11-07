@@ -13,6 +13,9 @@ from src.model.mstcn_av_as import MstcnAvAsModel
 from src.model.mstcn_av_vivit import MstcnAvVivitModel
 from src.model.mstcn_as_vivit import MstcnAsVivitModel
 
+
+from src.model.baseline_model import BaselineModel
+
 __all__ = [
     "AasistFullModel",
     "AasistAvAsModel",

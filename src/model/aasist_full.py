@@ -64,15 +64,18 @@ class  AasistFullModel(nn.Module):
             x = x.permute(0, 2, 1)
             return x
 
-        av_feats, _ = self.avhubert.extract_finetune(source={'video': av_video.float(),
-                                                        'audio': av_audio.float()},
+        av_feats, _ = self.avhubert.extract_finetune(source={'video': av_video,
+                                                        'audio': av_audio},
                                                     padding_mask=None,
                                                     output_layer=None)
         vivit_feats = self.vivit(pixel_values=vivit_frames).last_hidden_state[:, 1:, :]
-        vivit_feats = vivit_feats.view(1, 16, 14, 14, 768).mean(dim=(2, 3))
-        vivit_feats = vivit_feats.reshape(1, 16, 768)
+        vivit_feats = vivit_feats.view(av_feats.shape[0], 16, 14, 14, 768).mean(dim=(2, 3))
+        vivit_feats = vivit_feats.reshape(av_feats.shape[0], 16, 768)
         vivit_feats = interpolate(vivit_feats)
         as_feats = self.aasist(aasist_audio)
+
+        # print("============== NEW ==================")
+        # print(aasist_audio)
 
         """ IGAM """
         as_gat = self.GAT_aasist(as_feats)

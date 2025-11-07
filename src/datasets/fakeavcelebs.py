@@ -104,17 +104,5 @@ class FakeAVCelebsDataset(BaseDataset):
         instance_data = self.preprocess_data(instance_data)
 
         return instance_data
-    
-    def _extract_feats(self, avhubert, vivit, av_video, av_audio, vivit_frames):
-        cuda = torch.device("cuda")
-        cpu = torch.device("cpu")
-        with torch.inference_mode():
-            av_feats, _ = avhubert.extract_finetune(source={'video': video.float(), 'audio': audio.float()},
-                                                    padding_mask=None, output_layer=None)
-            vivit_feats = vivit(pixel_values=vivit_frames.float().to(cuda)).last_hidden_state[:, 1:, :]
-            vivit_feats = vivit_feats.view(1, 16, 14, 14, 768).mean(dim=(2, 3))
-            vivit_feats = vivit_feats.reshape(1, 16, 768)
-            vivit_feats = interpolate(vivit_feats)
 
-        return av_feats.to(cpu), vivit_feats.contiguous().to(cpu)
     

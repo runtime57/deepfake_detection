@@ -17,7 +17,7 @@ from src.utils.io_utils import ROOT_PATH, read_json, write_json
 from src.utils.split_utils import generate_split, gen_one_batch
 from src.datasets.preprocess import Processor
 
-class FeatsFakeAVCelebsDataset(BaseDataset):
+class FakeAVCelebsDataset(BaseDataset):
     """
     index contains next columns:
         path (str):  path to elemnt

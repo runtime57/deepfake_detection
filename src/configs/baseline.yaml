@@ -8,8 +8,7 @@ defaults:
   - _self_
 optimizer:
   _target_: torch.optim.Adam
-  lr_classifier: 1e-3
-  lr_extractor: 1e-5
+  lr: 1e-5
 lr_scheduler:
   _target_: torch.optim.lr_scheduler.StepLR
   gamma: 0.9

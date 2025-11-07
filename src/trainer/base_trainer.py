@@ -263,6 +263,7 @@ class BaseTrainer:
         self.is_train = False
         self.model.eval()
         self.evaluation_metrics.reset()
+        # print(self.model.avhubert.weights)
         with torch.no_grad():
             for batch_idx, batch in tqdm(
                 enumerate(dataloader),

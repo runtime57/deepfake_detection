@@ -50,8 +50,8 @@ def main(config):
     # lr_finetune = config.trainer.lr_finetune
     # lr = config.trainer.lr
     # param_groups = [
-    #     {"params": [p for p in model.vivit.parameters()    if p.requires_grad], "lr": lr_finetune},
-    #     {"params": [p for p in model.avhubert.parameters() if p.requires_grad], "lr": lr_finetune},
+    #     {"params": [p for p in model.vivit.parameters()    if p.requires_grad], "lr": lr},
+    #     {"params": [p for p in model.avhubert.parameters() if p.requires_grad], "lr": lr},
     #     {"params": [p for p in model.aasist.parameters()   if p.requires_grad], "lr": lr},
     #     {"params": [
     #                 p for n, p in model.named_parameters() if p.requires_grad 
@@ -60,8 +60,7 @@ def main(config):
     #     "lr":      lr
     #     }
     # ]
-
-    optimizer = instantiate(config.optimizer, params=trainable_params) #, _convert_='all')
+    optimizer = instantiate(config.optimizer, params=trainable_params)
     lr_scheduler = instantiate(config.lr_scheduler, optimizer=optimizer)
 
     # epoch_len = number of iterations for iteration-based training
