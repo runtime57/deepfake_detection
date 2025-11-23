@@ -8,7 +8,7 @@ from tqdm.auto import tqdm
 from src.datasets.data_utils import inf_loop
 from src.metrics.tracker import MetricTracker
 from src.utils.io_utils import ROOT_PATH
-
+from src.metrics.eer import compute_eer
 
 class BaseTrainer:
     """
@@ -206,7 +206,7 @@ class BaseTrainer:
             tqdm(self.train_dataloader, desc="train", total=self.epoch_len)
         ):
             try:
-                batch = self.process_batch(
+                batch, scores, labels = self.process_batch(
                     batch,
                     metrics=self.train_metrics,
                 )
@@ -241,7 +241,7 @@ class BaseTrainer:
                 break
 
         logs = last_train_metrics
-
+        
         # Run val/test
         for part, dataloader in self.evaluation_dataloaders.items():
             val_logs = self._evaluation_epoch(epoch, part, dataloader)
@@ -263,24 +263,41 @@ class BaseTrainer:
         self.is_train = False
         self.model.eval()
         self.evaluation_metrics.reset()
-        # print(self.model.avhubert.weights)
+        # print(self.model.avhubert.weights)        
+        full_scores = []
+        full_labels = []
         with torch.no_grad():
             for batch_idx, batch in tqdm(
                 enumerate(dataloader),
                 desc=part,
                 total=len(dataloader),
             ):
-                batch = self.process_batch(
+                batch, scores, labels = self.process_batch(
                     batch,
                     metrics=self.evaluation_metrics,
                 )
+                full_scores.append(scores)
+                full_labels.append(labels)
             self.writer.set_step(epoch * self.epoch_len, part)
             self._log_scalars(self.evaluation_metrics)
             self._log_batch(
                 batch_idx, batch, part
             )  # log only the last batch during inference
+        
+        # calculate eer
+        full_scores=torch.cat(full_scores, dim=-1)
+        full_labels = torch.cat(full_labels, dim=-1)
 
-        return self.evaluation_metrics.result()
+        bona_scores = full_scores[full_labels == 1]
+        spoof_scores = full_scores[full_labels == 0]
+        eer, threshold = compute_eer(bona_scores.cpu().numpy(), spoof_scores.cpu().numpy())
+        threshold_preds  = (full_scores > threshold).long()
+        eer_acc = (threshold_preds == full_labels).float().mean()
+
+        result = self.evaluation_metrics.result()
+        result['EER'] = eer
+        result['EER_ACCURACY'] = eer_acc
+        return result
 
     def _monitor_performance(self, logs, not_improved_count):
         """

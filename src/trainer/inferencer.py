@@ -158,7 +158,7 @@ class Inferencer(BaseTrainer):
                 # you can use safetensors or other lib here
                 torch.save(output, self.save_path / part / f"output_{output_id}.pth")
 
-        return batch
+        return batch, outputs['logits'][:, 1], batch['labels']
 
     def _inference_part(self, part, dataloader):
         """
@@ -179,18 +179,33 @@ class Inferencer(BaseTrainer):
         # create Save dir
         if self.save_path is not None:
             (self.save_path / part).mkdir(exist_ok=True, parents=True)
-
+        full_scores = []
+        full_labels = []
         with torch.no_grad():
             for batch_idx, batch in tqdm(
                 enumerate(dataloader),
                 desc=part,
                 total=len(dataloader),
             ):
-                batch = self.process_batch(
+                batch, scores, labels = self.process_batch(
                     batch_idx=batch_idx,
                     batch=batch,
                     part=part,
                     metrics=self.evaluation_metrics,
                 )
+                full_scores.append(scores)
+                full_labels.append(labels)
 
-        return self.evaluation_metrics.result()
+        full_scores=torch.cat(full_scores, dim=-1)
+        full_labels = torch.cat(full_labels, dim=-1)
+
+        bona_scores = full_scores[full_labels == 1]
+        spoof_scores = full_scores[full_labels == 0]
+        eer, threshold = compute_eer(bona_scores.cpu().numpy(), spoof_scores.cpu().numpy())
+        threshold_preds  = (full_scores > threshold).long()
+        eer_acc = (threshold_preds == full_labels).float().mean()
+
+        result = self.evaluation_metrics.result()
+        result['EER'] = eer
+        result['EER_ACCURACY'] = EER_ACCURACY
+        return result

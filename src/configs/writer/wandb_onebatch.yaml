@@ -1,8 +1,8 @@
 _target_: src.logger.WandBWriter
 project_name: "pytorch_template"
 entity: null
-run_name: "mstcn_full_onebatch"
-mode: "online"
+run_name: "mstcn_lav_offline"
+mode: "offline"
 loss_names: ["loss"] # which losses to log (useful for multi-loss tasks, s.a. GANs)
 log_checkpoints: False # set to True if you want to log save_dir with checkpoints to W&B
 id_length: 8 # length of the run_id

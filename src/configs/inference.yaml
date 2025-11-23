@@ -7,8 +7,8 @@ defaults:
   - transforms: example
   - _self_
 inferencer:
-  device_tensors: ["vivit_feats", "av_feats", "aasist_audio", "labels"] # which tensors should be on device (ex. GPU)
+  device_tensors: ["av_audio", "av_video", "vivit_frames", "aasist_audio", "labels"] # which tensors should be on device (ex. GPU)
   device: auto # device name or "auto"
   save_path: "inference/fakeavcelebs" # any name here, can be a dataset name
   seed: 1
-  from_pretrained: "saved/aasist_full/model_best.pth" # path to the pretrained model
+  from_pretrained: "/home/ialarin/deepfake_detection/saved/aasist_full/checkpoint-epoch10.pth" # path to the pretrained model

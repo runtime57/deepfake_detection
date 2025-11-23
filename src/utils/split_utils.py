@@ -15,11 +15,6 @@ def get_mp4_paths(directory='.'):
     vox_split = [{'path': '/'.join(full_path.split('/')[6:]), 'method': 'real'} for full_path in mp4_list if 'mouth_roi' not in full_path]
     return vox_split
 
-def add_to_train():
-    dir_path = str(ROOT_PATH / 'data/VoxCelebTest/videos')
-    index = read_json(dir_path + '/index.json')
-    return index
-
 def generate_split(random_state=79098):
     """
     split all subjects (500) to train and test groups in proportion 430:70
@@ -86,7 +81,6 @@ def generate_split(random_state=79098):
 
     train_path = ROOT_PATH / "data" / "fakeavcelebs" / "train"
     train_path.mkdir(exist_ok=True, parents=True)
-    train += add_to_train()
     write_json(train, str(train_path / "split.json"))
 
     real = [row for row in data if row['source'] in test_ids and row['method'] == 'real']

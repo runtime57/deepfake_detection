@@ -58,7 +58,7 @@ class Trainer(BaseTrainer):
                 metrics.update_global(met.name, num, denum)
             else:
                 metrics.update(met.name, met(**batch))
-        return batch
+        return batch, outputs['logits'][:, 1], batch['labels']
 
     def _log_batch(self, batch_idx, batch, mode="train"):
         """
