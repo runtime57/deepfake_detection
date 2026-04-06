@@ -28,7 +28,6 @@ class AccuracyMetric(BaseMetric):
         Returns:
             metric (float): calculated metric.
         """
-        print(logits, labels)
         dclasses = logits.argmax(dim=-1)
         dlabels = labels.to(logits.device)
         result = (dclasses == dlabels).mean(dtype=torch.float32)

@@ -22,7 +22,6 @@ import shutil
 
 
 # ViViT Preprocess
-
 class ViViT_Processor():
     def __init__(self):
         self.image_processor = VivitImageProcessor.from_pretrained("google/vivit-b-16x2-kinetics400")
@@ -88,8 +87,33 @@ class ViViT_Processor():
         return indices
 
 
-# AV Preprocess
+# ArcFace Preprocess
+class ArcFace_Processor:
+    def __init__(self):
+        self.providers = ['CUDAExecutionProvider', 'CPUExecutionProvider'] if torch.cuda.is_available() else ['CPUExecutionProvider']
+        self.face_app = insightface.app.FaceAnalysis(name='buffalo_l', providers=providers)
+        self.face_app.prepare(ctx_id=0 if torch.cuda.is_available() else -1,  det_size=(224, 224))
 
+    def get_feats(self, video_path):
+        cap = cv2.VideoCapture(video_path)
+        feats = []
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        step = max(1, total_frames // 32)
+        for i in range(0, total_frames, step):
+                if len(feats) >= 32:
+                    break
+                cap.set(cv2.CAP_PROP_POS_FRAMES, i)
+                ret, frame = cap.read()
+                if not ret:
+                    break
+                faces = face_app.get(frame)
+                embedding = faces[0].embedding if len(faces) > 0 and hasattr(faces[0], "embedding") else np.zeros(512)
+                feats.append(embedding)
+        cap.release()
+        return feats
+
+
+# AV Preprocess
 class AV_Processor:
     def __init__(self):
         self.FACE_PREDICTOR_PATH='src/model/shape_predictor/shape_predictor_68_face_landmarks.dat'
@@ -149,14 +173,14 @@ class AV_Processor:
         # print(preprocessed_landmarks)
 
         if not preprocessed_landmarks:
-                print("A"*500)
-                frame_gen = self.read_video(path)
-                frames = [cv2.resize(x, (96, 96)) for x in frame_gen]
-                write_video_ffmpeg(frames, dst_path, "/usr/bin/ffmpeg")
-                return
+            print("A"*500)
+            frame_gen = self.read_video(path)
+            frames = [cv2.resize(x, (96, 96)) for x in frame_gen]
+            write_video_ffmpeg(frames, dst_path, "/home/ialarin/bin/ffmpeg")
+            return
         else:        
             rois = crop_patch(path, preprocessed_landmarks, self.mean_face_landmarks, stablePntsIDs, STD_SIZE, window_margin=12, start_idx=48, stop_idx=68, crop_height=96, crop_width=96)
-            write_video_ffmpeg(rois, dst_path, "/usr/bin/ffmpeg")
+            write_video_ffmpeg(rois, dst_path, "/home/ialarin/bin/ffmpeg")
 
 
     def preprocess_audio(self, path, dst_path, ffmpeg, must):
@@ -171,7 +195,7 @@ class AV_Processor:
         mouth_roi_path = '/'.join(path.split('/')[:-1] + ['mouth_roi_' + path.split('/')[-1]])
         wav_path = path.replace('mp4', 'wav')
         self.preprocess_video(path, mouth_roi_path, must)
-        self.preprocess_audio(path, wav_path, '/usr/bin/ffmpeg', must)
+        self.preprocess_audio(path, wav_path, '/home/ialarin/bin/ffmpeg', must)
         return mouth_roi_path, wav_path
 
 
@@ -230,9 +254,9 @@ class Processor:
         index_path = ROOT_PATH / "data" / "fakeavcelebs" / name / "index.json"
         
         self.avp = AV_Processor()
-        self.vvtp = ViViT_Processor()
+        # self.vvtp = ViViT_Processor()
 
-    def create_element(self, row, must=1):
+    def create_element(self, row, must=0):
         row_path = row['path']
         label = 1 if row['method'] == 'real' else 0
         

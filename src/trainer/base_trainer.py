@@ -55,6 +55,7 @@ class BaseTrainer:
                 should be applied on the whole batch. Depend on the
                 tensor name.
         """
+        self.scaler = torch.amp.GradScaler("cuda", enabled=True)
         self.is_train = True
 
         self.config = config
@@ -218,7 +219,7 @@ class BaseTrainer:
                 else:
                     raise e
 
-            self.train_metrics.update("grad_norm", self._get_grad_norm())
+            # self.train_metrics.update("grad_norm", self._get_grad_norm())
 
             # log current results
             if batch_idx % self.log_step == 0:
@@ -297,6 +298,7 @@ class BaseTrainer:
         result = self.evaluation_metrics.result()
         result['EER'] = eer
         result['EER_ACCURACY'] = eer_acc
+        result['amp_scale'] = float(self.scaler.get_scale())
         return result
 
     def _monitor_performance(self, logs, not_improved_count):

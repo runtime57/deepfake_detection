@@ -1,7 +1,7 @@
 _target_: src.logger.WandBWriter
 project_name: "pytorch_template"
 entity: null
-run_name: "aasist_1e-5"
+run_name: "aasist_wav_1e-6"
 mode: "offline"
 loss_names: ["loss"] # which losses to log (useful for multi-loss tasks, s.a. GANs)
 log_checkpoints: False # set to True if you want to log save_dir with checkpoints to W&B

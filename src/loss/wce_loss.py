@@ -12,7 +12,7 @@ class WeightedCrossEntropyLoss(nn.Module):
         super().__init__()
         real = 4000
         fake = 16340
-        weights = torch.tensor([(real + fake) / (2 * fake), (real + fake) / (2 * real)])
+        weights = torch.tensor([2.0, 8.0])
         self.loss = nn.CrossEntropyLoss(weight=weights)
         
     def forward(self, logits: torch.Tensor, labels: torch.Tensor, **batch):

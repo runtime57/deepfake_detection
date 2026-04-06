@@ -3,6 +3,7 @@ from tqdm.auto import tqdm
 
 from src.metrics.tracker import MetricTracker
 from src.trainer.base_trainer import BaseTrainer
+from src.metrics.eer import compute_eer
 
 
 class Inferencer(BaseTrainer):
@@ -207,5 +208,5 @@ class Inferencer(BaseTrainer):
 
         result = self.evaluation_metrics.result()
         result['EER'] = eer
-        result['EER_ACCURACY'] = EER_ACCURACY
+        result['EER_ACCURACY'] = eer_acc
         return result

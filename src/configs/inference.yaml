@@ -1,14 +1,14 @@
 defaults:
-  - model: amsdf_lav
+  - model: amsdf_wav_lav
   - writer: wandb_inf
   - metrics: inference_full
-  - datasets: fakeavcelebs_full
+  - datasets: balanced
   - dataloader: dataloader
   - transforms: example
   - _self_
 inferencer:
-  device_tensors: ["av_audio", "av_video", "vivit_frames", "aasist_audio", "labels"] # which tensors should be on device (ex. GPU)
+  device_tensors: ["av_audio", "av_video", "vjepa_frames", "aasist_audio", "labels"] # which tensors should be on device (ex. GPU)
   device: auto # device name or "auto"
-  save_path: "inference/fakeavcelebs" # any name here, can be a dataset name
+  save_path: "inference/fakeavcelebs_wav" # any name here, can be a dataset name
   seed: 1
-  from_pretrained: "/home/ialarin/deepfake_detection/saved/aasist_full/checkpoint-epoch10.pth" # path to the pretrained model
+  from_pretrained: "/home/ialarin/deepfake_detection/saved/aasist_wav_1e-5/model_best.pth" # path to the pretrained model

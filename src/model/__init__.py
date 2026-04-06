@@ -3,6 +3,8 @@ from src.model.aasist_av_as import AasistAvAsModel
 from src.model.aasist_av_vivit import AasistAvVivitModel
 from src.model.aasist_as_vivit import AasistAsVivitModel
 
+from src.model.aasist_full_2 import AasistWavFullModel
+
 from src.model.mlp_full import MlpFullModel
 from src.model.mlp_av_as import MlpAvAsModel
 from src.model.mlp_av_vivit import MlpAvVivitModel
@@ -21,6 +23,8 @@ __all__ = [
     "AasistAvAsModel",
     "AasistAvVivitModel",
     "AasistAsVivitModel",
+
+    "AasistWavFullModel",
 
     "MlpFullModel",
     "MlpAvAsModel",
