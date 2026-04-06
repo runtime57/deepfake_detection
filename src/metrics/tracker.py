@@ -16,7 +16,7 @@ class MetricTracker:
                 from each batch.
         """
         self.writer = writer
-        self._data = pd.DataFrame(index=keys, columns=["total", "counts", "average"])
+        self._data = pd.DataFrame(index=keys, columns=["total", "counts", "average", "full_scores", "full_labels"])
         self.reset()
 
     def reset(self):
@@ -70,7 +70,7 @@ class MetricTracker:
         self._data.loc[key, "total"] += num
         self._data.loc[key, "counts"] += denum
         self._data.loc[key, "average"] = 0 if self._data.counts[key] == 0 else self._data.total[key] / self._data.counts[key]
-    
+
     def avg(self, key):
         """
         Return average value for a given metric.

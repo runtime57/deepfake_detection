@@ -13,6 +13,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
+import fairseq
+from src.utils.io_utils import ROOT_PATH
 
 
 class GraphAttentionLayer(nn.Module):
@@ -31,7 +33,7 @@ class GraphAttentionLayer(nn.Module):
         self.bn = nn.BatchNorm1d(out_dim)
 
         # dropout for inputs
-        self.input_drop = nn.Dropout(p=0.2)
+        self.input_drop = nn.Dropout(p=0.35)
 
         # activate
         self.act = nn.SELU(inplace=True)
@@ -138,7 +140,7 @@ class HtrgGraphAttentionLayer(nn.Module):
         self.bn = nn.BatchNorm1d(out_dim)
 
         # dropout for inputs
-        self.input_drop = nn.Dropout(p=0.2)
+        self.input_drop = nn.Dropout(p=0.35)
 
         # activate
         self.act = nn.SELU(inplace=True)
@@ -483,7 +485,7 @@ class Model(nn.Module):
         self.first_bn = nn.BatchNorm2d(num_features=1)
 
         self.drop = nn.Dropout(0.5, inplace=True)
-        self.drop_way = nn.Dropout(0.2, inplace=True)
+        self.drop_way = nn.Dropout(0.4, inplace=True)
         self.selu = nn.SELU(inplace=True)
 
         self.encoder = nn.Sequential(
@@ -635,3 +637,32 @@ class aasist_encoder(nn.Module):
         out, _ = torch.max(torch.abs(emb), dim=2) 
         out = out.transpose(1, 2) 
         return out
+
+class SSLModel(nn.Module):
+    def __init__(self):
+        super(SSLModel, self).__init__()
+        cp_path = str(ROOT_PATH / 'src/model/ssl_model/xlsr2_300m.pt')
+        model, cfg, task = fairseq.checkpoint_utils.load_model_ensemble_and_task([cp_path])
+        self.model = model[0]
+        self.out_dim = 1024
+        return
+
+    def extract_feat(self, input_data):
+        if input_data.ndim == 3:
+            input_tmp = input_data[:, :, 0]
+        else:
+            input_tmp = input_data
+        # [batch, length, dim]
+        emb = self.model(input_tmp, mask=False, features_only=True)['x']
+        return emb
+
+class wav2vec_encoder(nn.Module):
+    def __init__(self, as_channels):
+        super(wav2vec_encoder, self).__init__()
+        self.model = SSLModel()
+        self.proj = nn.Linear(1024, as_channels)
+
+    def forward(self, x, Freq_aug=False):
+        emb = self.model.extract_feat(x)
+        feats = self.proj(emb)
+        return feats

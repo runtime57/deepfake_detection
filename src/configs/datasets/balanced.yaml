@@ -1,8 +1,8 @@
-train:
+first:
   _target_: src.datasets.FakeAVCelebsDataset
-  name: "one_batch"
+  name: "test-set-1-balanced"
   instance_transforms: ${transforms.instance_transforms.inference}
-test:
+second:
   _target_: src.datasets.FakeAVCelebsDataset
-  name: "one_batch"
+  name: "test-set-2-balanced"
   instance_transforms: ${transforms.instance_transforms.inference}

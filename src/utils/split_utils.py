@@ -15,11 +15,6 @@ def get_mp4_paths(directory='.'):
     vox_split = [{'path': '/'.join(full_path.split('/')[6:]), 'method': 'real'} for full_path in mp4_list if 'mouth_roi' not in full_path]
     return vox_split
 
-def add_to_train():
-    dir_path = str(ROOT_PATH / 'data/VoxCelebTest/videos')
-    index = read_json(dir_path + '/index.json')
-    return index
-
 def generate_split(random_state=79098):
     """
     split all subjects (500) to train and test groups in proportion 430:70
@@ -84,14 +79,12 @@ def generate_split(random_state=79098):
         _, test = train_test_split([row for row in data if row['source'] in test_ids and row['type'] == fake_type], test_size=23, random_state=random_state)
         test_groups["set-2"] += test
 
-    train_path = ROOT_PATH / "data" / "featsfakeavcelebs" / "train"
+    train_path = ROOT_PATH / "data" / "fakeavcelebs" / "train"
     train_path.mkdir(exist_ok=True, parents=True)
-    train += add_to_train()
-    # train = get_mp4_paths(str(ROOT_PATH / 'data/VoxCelebTest'))[:3570] + train
     write_json(train, str(train_path / "split.json"))
 
     real = [row for row in data if row['source'] in test_ids and row['method'] == 'real']
-    test_path = ROOT_PATH / "data" / "featsfakeavcelebs"
+    test_path = ROOT_PATH / "data" / "fakeavcelebs"
     for method in methods + ["set-1", "set-2"]:
         test_groups[method] += real
         (test_path / f"test-{method}").mkdir(exist_ok=True, parents=True)
@@ -117,7 +110,7 @@ def gen_one_batch():
                 'path': 'data/' + row[''] + '/' + row['path']
             })
     shuffle(data)
-    one_batch_path = ROOT_PATH / "data" / "featsfakeavcelebs" / "one_batch"
+    one_batch_path = ROOT_PATH / "data" / "fakeavcelebs" / "one_batch"
     one_batch_path.mkdir(exist_ok=True, parents=True)
     write_json(data, str(one_batch_path / "split.json"))
     print("Success")

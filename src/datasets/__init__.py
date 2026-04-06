@@ -1,2 +1,1 @@
 from src.datasets.fakeavcelebs import FakeAVCelebsDataset
-from src.datasets.featsfakeavcelebs import FeatsFakeAVCelebsDataset

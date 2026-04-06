@@ -3,6 +3,8 @@ from src.model.aasist_av_as import AasistAvAsModel
 from src.model.aasist_av_vivit import AasistAvVivitModel
 from src.model.aasist_as_vivit import AasistAsVivitModel
 
+from src.model.aasist_full_2 import AasistWavFullModel
+
 from src.model.mlp_full import MlpFullModel
 from src.model.mlp_av_as import MlpAvAsModel
 from src.model.mlp_av_vivit import MlpAvVivitModel
@@ -13,11 +15,16 @@ from src.model.mstcn_av_as import MstcnAvAsModel
 from src.model.mstcn_av_vivit import MstcnAvVivitModel
 from src.model.mstcn_as_vivit import MstcnAsVivitModel
 
+
+from src.model.baseline_model import BaselineModel
+
 __all__ = [
     "AasistFullModel",
     "AasistAvAsModel",
     "AasistAvVivitModel",
     "AasistAsVivitModel",
+
+    "AasistWavFullModel",
 
     "MlpFullModel",
     "MlpAvAsModel",

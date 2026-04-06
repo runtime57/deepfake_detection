@@ -6,6 +6,7 @@ import fairseq
 from argparse import Namespace
 from transformers import VivitModel
 from .AASIST import aasist_encoder
+from src.utils.io_utils import ROOT_PATH
 
 
 class BaselineModel(nn.Module):
@@ -23,7 +24,7 @@ class BaselineModel(nn.Module):
         super().__init__()
         # init av-hubert model
         # first time need to run this command: fairseq.utils.import_user_module(Namespace(user_dir='/home/runtime57/hse/coursework_2/deepfake_detection/src/model/av_hubert/avhubert'))
-        ckpt_path = '/home/runtime57/hse/coursework_2/deepfake_detection/src/model/av_hubert/ckpt/base_vox_433h.pt'
+        ckpt_path = str( ROOT_PATH / 'src'/'model'/'av_hubert'/'ckpt'/'base_vox_433h.pt')
         models, cfg, task = fairseq.checkpoint_utils.load_model_ensemble_and_task([ckpt_path])
         self.avhubert = models[0]
         if hasattr(models[0], 'decoder'):

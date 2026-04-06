@@ -46,10 +46,31 @@ def main(config):
     metrics = instantiate(config.metrics)
 
     # build optimizer, learning rate scheduler
-    trainable_params = filter(lambda p: p.requires_grad, model.parameters())
-    optimizer = instantiate(config.optimizer, params=trainable_params)
-    lr_scheduler = instantiate(config.lr_scheduler, optimizer=optimizer)
-
+    try:
+        lr_finetune = config.trainer.lr_finetune
+        lr = config.optimizer.lr
+        trainable_params = [
+            {"params": [p for p in model.vjepa2.parameters()    if p.requires_grad], "lr": lr_finetune},
+            {"params": [p for p in model.avhubert.parameters() if p.requires_grad], "lr": lr_finetune},
+            {"params": [p for p in model.aasist.parameters()   if p.requires_grad], "lr": lr_finetune},
+            {"params": [
+                        p for n, p in model.named_parameters() if p.requires_grad 
+                        and not n.startswith(("vjepa2.", "avhubert.", "aasist."))
+                    ], 
+            "lr":      lr
+            }
+        ]
+        print("Merged lr")
+    except Exception as e:
+    	print("Single lr")
+    	print(e)
+    	trainable_params = filter(lambda p: p.requires_grad, model.parameters())
+    optimizer = instantiate(config.optimizer, trainable_params)
+    if config["lr_scheduler"]["_target_"] == "torch.optim.LambdaLR":
+        lr_scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda = lambda epoch: 1)
+    else:
+        lr_scheduler = instantiate(config.lr_scheduler, optimizer=optimizer)
+    
     # epoch_len = number of iterations for iteration-based training
     # epoch_len = None or len(dataloader) for epoch-based training
     epoch_len = config.trainer.get("epoch_len")
