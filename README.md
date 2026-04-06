@@ -1,5 +1,22 @@
 # Multimodal System for Audio-Visual Deepfake Detection
 
+## VJEPA-2 Backbone + Fine-Tuning
+The model has been upgraded by replacing the **ViViT encoder with VJEPA-2** and enabling fine-tuning across all encoders.   
+The new version already achieves high accuracy across diverse deepfake methods, with ongoing work focused on completing additional experiments.
+
+### Current Results
+
+| Dataset            | Accuracy | Accuracy (EER) |
+|--------------------|----------|----------------|
+| FaceSwap           | 90.00    | 95.71          |
+| FSGAN              | 97.86    | 100.00         |
+| Wav2Lip            | 97.86    | 100.00         |
+| RTVC               | 96.43    | 95.71          |
+| FSGAN + Wav2Lip    | 97.86    | 100.00         |
+| Test-set-1         | 96.97    | 95.45          |
+| Test-set-2         | 97.83    | 95.65          |
+
+## Overview
 We combine AV-HuBERT, ViViT and AASIST encoder to extract audio-visual features, which are then processed by a graph-based classifier to achieve higher results in audio-visual deepfake detection. See the [paper](https://github.com/runtime57/deepfake_detection/blob/main/paper/Multimodal%20System%20for%20Audio-Visual%20Deepfake%20Detection.pdf) for details.
 
 ![Full pipeline illustration](paper/graphics/FullPipeline.png)
